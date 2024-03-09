@@ -1,0 +1,17 @@
+{
+  "name": "msf-arabbank",
+  "version": "1.0.0",
+  "license": "MIT",
+  "dependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+    "@openzeppelin/contracts": "^4.9.6",
+    "axios": "^1.6.7",
+    "dotenv": "^16.4.5",
+    "hardhat": "^2.21.0",
+    "hardhat-contract-sizer": "^2.10.0"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-ethers": "^3.0.5",
+    "ethers": "^6.11.1"
+  }
+}
