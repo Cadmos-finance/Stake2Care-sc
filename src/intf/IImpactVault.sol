@@ -24,29 +24,35 @@ import "@openzeppelin/contracts/interfaces/IERC20Metadata.sol";
 /// @title Interface of the ImpactVault Contract
 /// @author N.B.
 /// @notice Used to donate gains stemming from a positively rebasing token
-interface IImpactVault is IERC20Metadata{
-
+interface IImpactVault is IERC20Metadata {
     struct TimelockedSurplus {
         uint128 surplus; // TimeLocked surplus - distributable at timelock expiry (1 day)
         uint64 timestamp; // Ok until 2554  - timestamp when surplus was timelocked
         uint64 minimalCollectAmount; // Minimal Amount to auto-Collect at each deposit/ withdrawal - can be set by _owner
     }
 
-
     /* ========== MUTATIVE FUNCTIONS ========== */
 
-
     /// @notice Collects Asset Surplus as a donation for Owner - Does not collect if surplus is less than minimalTransfer
-    function collectDonations(uint64 minimalTransfer) external returns (uint128 collectedAmount, uint256 netWealth, uint256 totalSupply);
+    function collectDonations(
+        uint64 minimalTransfer
+    )
+        external
+        returns (
+            uint128 collectedAmount,
+            uint256 netWealth,
+            uint256 totalSupply
+        );
 
     /* ========== RESTRICTED FUNCTIONS ========== */
 
     /// @notice Allows Owner to set minimalCollectAmount
     function setAutoCollectThreshold(uint64 newMinimalCollectAmount) external;
 
-
     /* ========== EVENTS ========== */
 
-    event SetAutoCollectThreshold(uint64 newMinimalCollectAmount, uint64 oldMinimalCollectAmount);
-
+    event SetAutoCollectThreshold(
+        uint64 newMinimalCollectAmount,
+        uint64 oldMinimalCollectAmount
+    );
 }

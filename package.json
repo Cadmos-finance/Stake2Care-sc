@@ -8,7 +8,16 @@
     "axios": "^1.6.7",
     "dotenv": "^16.4.5",
     "hardhat": "^2.21.0",
-    "hardhat-contract-sizer": "^2.10.0"
+    "hardhat-contract-sizer": "^2.10.0",
+    "prettier": "^3.2.5",
+    "prettier-plugin-solidity": "^1.3.1"
+  },
+  "scripts": {
+    "build": "hardhat clean && hardhat compile",
+    "coverage": "hardhat coverage",
+    "prettier": "prettier --write \"**/*.{js,json,md,ts,yml}\" && prettier --write --plugin=prettier-plugin-solidity \"**/*.sol\"",
+    "prettier:check": "prettier --check \"**/*.{js,json,md,ts,yml}\" && prettier --check --plugin=prettier-plugin-solidity \"**/*.sol\"",
+    "test": "hardhat test"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-ethers": "^3.0.5",

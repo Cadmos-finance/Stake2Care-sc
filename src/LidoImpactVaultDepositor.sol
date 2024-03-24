@@ -2,14 +2,14 @@
 pragma solidity 0.8.19;
 
 //    █████████   ███████████     █████████   ███████████     ███████████    █████████   ██████   █████ █████   ████
-//   ███░░░░░███ ░░███░░░░░███   ███░░░░░███ ░░███░░░░░███   ░░███░░░░░███  ███░░░░░███ ░░██████ ░░███ ░░███   ███░ 
-//  ░███    ░███  ░███    ░███  ░███    ░███  ░███    ░███    ░███    ░███ ░███    ░███  ░███░███ ░███  ░███  ███   
-//  ░███████████  ░██████████   ░███████████  ░██████████     ░██████████  ░███████████  ░███░░███░███  ░███████    
-//  ░███░░░░░███  ░███░░░░░███  ░███░░░░░███  ░███░░░░░███    ░███░░░░░███ ░███░░░░░███  ░███ ░░██████  ░███░░███   
-//  ░███    ░███  ░███    ░███  ░███    ░███  ░███    ░███    ░███    ░███ ░███    ░███  ░███  ░░█████  ░███ ░░███  
+//   ███░░░░░███ ░░███░░░░░███   ███░░░░░███ ░░███░░░░░███   ░░███░░░░░███  ███░░░░░███ ░░██████ ░░███ ░░███   ███░
+//  ░███    ░███  ░███    ░███  ░███    ░███  ░███    ░███    ░███    ░███ ░███    ░███  ░███░███ ░███  ░███  ███
+//  ░███████████  ░██████████   ░███████████  ░██████████     ░██████████  ░███████████  ░███░░███░███  ░███████
+//  ░███░░░░░███  ░███░░░░░███  ░███░░░░░███  ░███░░░░░███    ░███░░░░░███ ░███░░░░░███  ░███ ░░██████  ░███░░███
+//  ░███    ░███  ░███    ░███  ░███    ░███  ░███    ░███    ░███    ░███ ░███    ░███  ░███  ░░█████  ░███ ░░███
 //  █████   █████ █████   █████ █████   █████ ███████████     ███████████  █████   █████ █████  ░░█████ █████ ░░████
-// ░░░░░   ░░░░░ ░░░░░   ░░░░░ ░░░░░   ░░░░░ ░░░░░░░░░░░     ░░░░░░░░░░░  ░░░░░   ░░░░░ ░░░░░    ░░░░░ ░░░░░   ░░░░ 
-//                                                                                                                                                                       
+// ░░░░░   ░░░░░ ░░░░░   ░░░░░ ░░░░░   ░░░░░ ░░░░░░░░░░░     ░░░░░░░░░░░  ░░░░░   ░░░░░ ░░░░░    ░░░░░ ░░░░░   ░░░░
+//
 //
 //    ,ad8888ba,         db         88888888ba,    88b           d88    ,ad8888ba,     ad88888ba
 //   d8"'    `"8b       d88b        88      `"8b   888b         d888   d8"'    `"8b   d8"     "8b
@@ -29,46 +29,49 @@ pragma solidity 0.8.19;
 // Primary Author(s)
 // N.B.: https://github.com/nboueri
 
-
 import "./ImpactVaultDepositor.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-
-
 interface Lido {
-    function submit(address referral) external payable returns (uint256 assetAmount);
+    function submit(
+        address referral
+    ) external payable returns (uint256 assetAmount);
 }
 
-
-
-/// @title LidoImpactVaultDepositor 
+/// @title LidoImpactVaultDepositor
 /// @author N.B.
 /// @notice ImpactVaultDepositor for the Lido Impact Vault
-contract LidoImpactVaultDepositor is ImpactVaultDepositor{
-
+contract LidoImpactVaultDepositor is ImpactVaultDepositor {
     address private immutable _lidoReferral; //Referral parameter to pass to Lido when depositing ETH
 
     error NotImplementedError();
 
     /* ========== CONSTRUCTOR ========== */
 
-    constructor(address lidoReferral_, address impactVault_) ImpactVaultDepositor(impactVault_) {
+    constructor(
+        address lidoReferral_,
+        address impactVault_
+    ) ImpactVaultDepositor(impactVault_) {
         _lidoReferral = lidoReferral_;
     }
 
- 
     /* ========== INTERNAL FUNCTIONS ========== */
 
     /// @dev Only supported deposit are ETH and STETH
-    function _convertToken(uint256 , address ) internal pure override (ImpactVaultDepositor) returns (uint256){
+    function _convertToken(
+        uint256,
+        address
+    ) internal pure override(ImpactVaultDepositor) returns (uint256) {
         revert NotImplementedError();
     }
 
     /// @dev deposits ETH within Lido to obtain STETH
-    function _convertETH() internal override (ImpactVaultDepositor)  returns (uint256 assetAmount){
-            assetAmount = Lido(asset).submit{value:msg.value}(_lidoReferral);
+    function _convertETH()
+        internal
+        override(ImpactVaultDepositor)
+        returns (uint256 assetAmount)
+    {
+        assetAmount = Lido(asset).submit{value: msg.value}(_lidoReferral);
     }
-
-
 }

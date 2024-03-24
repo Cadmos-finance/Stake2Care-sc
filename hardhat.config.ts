@@ -3,8 +3,7 @@ import "@nomicfoundation/hardhat-toolbox";
 import "hardhat-contract-sizer";
 import "dotenv/config";
 
-const RPC_URL =
-  process.env.SEPOLIA_URL || "rpc";
+const RPC_URL = process.env.SEPOLIA_URL || "rpc";
 const PRIVATE_KEY = process.env.PRIVATE_KEY || "privatKey";
 
 const config: HardhatUserConfig = {
@@ -21,7 +20,7 @@ const config: HardhatUserConfig = {
   networks: {
     hardhat: {
       initialBaseFeePerGas: 0,
-      gasPrice:0,
+      gasPrice: 0,
     },
     sepolia: {
       url: RPC_URL,

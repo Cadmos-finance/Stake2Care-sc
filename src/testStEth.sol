@@ -6,28 +6,23 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract TestStETH is ERC20, Ownable {
-
     uint256 public constant wad = 1e18;
     uint256 public accrualFactor; //Accrual factor to rebase token
 
-    constructor()
-        ERC20("Test STETH", "TSETH")
-    {
+    constructor() ERC20("Test STETH", "TSETH") {
         accrualFactor = wad;
     }
-
 
     /**
      * @dev See {IERC20-balanceOf}.
      */
     function balanceOf(address account) public view override returns (uint256) {
-        return super.balanceOf(account)*accrualFactor/wad;
+        return (super.balanceOf(account) * accrualFactor) / wad;
     }
 
     function changeAccrual(uint256 newAccrual) public onlyOwner {
         accrualFactor = newAccrual;
     }
-
 
     function mint(address to, uint256 amount) public onlyOwner {
         _mint(to, amount);
@@ -38,14 +33,16 @@ contract TestStETH is ERC20, Ownable {
         return msg.value;
     }
 
-    function _transfer(address from, address to, uint256 amount) internal override(ERC20) {
-        amount = amount*wad/accrualFactor;
-        super._transfer(from,to,amount);
+    function _transfer(
+        address from,
+        address to,
+        uint256 amount
+    ) internal override(ERC20) {
+        amount = (amount * wad) / accrualFactor;
+        super._transfer(from, to, amount);
     }
 
-    receive() external payable{
+    receive() external payable {
         submit(address(0));
     }
-
-
 }

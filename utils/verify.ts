@@ -4,7 +4,7 @@ import { Contract } from "ethers";
 let verifyContract = async (
   contract: Contract,
   args: any,
-  num_block_confirmation: number
+  num_block_confirmation: number,
 ) => {
   const { address } = contract;
   if (hre.network.config.chainId === 31337 || !hre.config.etherscan.apiKey) {
