@@ -44,8 +44,7 @@ abstract contract ImpactVaultDepositor is IImpactVaultDepositor {
     address public immutable override(IImpactVaultDepositor) ImpactVault;
     address public immutable override(IImpactVaultDepositor) asset;
     uint256 private constant wad = 1e18;
-    uint256 private constant maxUint =
-        0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
+    uint256 private constant maxUint = type(uint256).max;
 
     /* ========== CONSTRUCTOR ========== */
 
