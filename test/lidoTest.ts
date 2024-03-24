@@ -80,14 +80,17 @@ describe("Impact Vault", async () => {
       impactVault.getAddress(),
     ); // 0.1
     expect(await impactVault.balanceOf(depositor.getAddress())).to.equal(0);
-    await depositor.sendTransaction({
+    let tx = await depositor.sendTransaction({
       to: await lidoImpactVaultDepositor.getAddress(),
       value: ethers.parseEther("1.0"), // Sends exactly 1.0 ether
     });
 
+    let rcpt = await tx.wait(1);
+    let gasSpent = rcpt.gasUsed * rcpt.gasPrice;
+
     expect(await ethers.provider.getBalance(depositor.getAddress())).to.equal(
-      startDepositorBalanceETH - ethers.parseEther("1.0"),
-    ); // Depsoitor Spent 1 eth
+      startDepositorBalanceETH - ethers.parseEther("1.0") - gasSpent,
+    ); // Depositor Spent 1 eth
     expect(await impactVault.balanceOf(depositor.getAddress())).to.equal(
       ethers.parseEther("1.0"),
     ); // and received 1 MSF-STETH in exchange
@@ -108,16 +111,17 @@ describe("Impact Vault", async () => {
       await impactVault.convertToAssets(ethers.parseEther("1.0")),
     ).to.equal(ethers.parseEther("1.0")); // and it is worth 1.0 STETH now
 
-    await impactVault
+    tx = await impactVault
       .connect(depositor)
       .redeem(
         ethers.parseEther("1.0"),
         depositor.getAddress(),
         depositor.getAddress(),
       ); // Depositor Redeems all his holdings
-
+    rcpt = await tx.wait(1);
+    gasSpent += rcpt.gasUsed * rcpt.gasPrice;
     expect(await ethers.provider.getBalance(depositor.getAddress())).to.equal(
-      startDepositorBalanceETH - ethers.parseEther("1.0"),
+      startDepositorBalanceETH - ethers.parseEther("1.0") - gasSpent,
     ); // no change on ETH balance
     expect(await impactVault.balanceOf(depositor.getAddress())).to.equal(0); // Depositor redeemed all MSF-STETH
     expect(await testStETH.balanceOf(depositor.getAddress())).to.equal(

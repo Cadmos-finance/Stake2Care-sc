@@ -13,15 +13,10 @@ const config: HardhatUserConfig = {
       optimizer: {
         enabled: true,
         runs: 1000,
-        details: { yul: true },
       },
     },
   },
   networks: {
-    hardhat: {
-      initialBaseFeePerGas: 0,
-      gasPrice: 0,
-    },
     sepolia: {
       url: RPC_URL,
       accounts: [PRIVATE_KEY],
