@@ -52,7 +52,7 @@ contract ImpactVault is ERC4626, Ownable2Step, IImpactVault {
     struct TimelockedSurplus {
         uint128 surplus; // TimeLocked surplus - distributable at timelock expiry (1 day)
         uint64 timestamp; // Ok until 2554  - timestamp when surplus was timelocked
-        uint64 minimalCollectAmount; // Minimal Amount to auto-Collect at each deposit/ withdrawal - can be set by _owner. uint24 -> ~ 18 wad
+        uint64 minimalCollectAmount; // Minimal Amount to auto-Collect at each deposit/ withdrawal - can be set by _owner. uint64 -> ~ 18 wad
     }
     */
     TimelockedSurplus public timeLockedSurplus;
@@ -156,7 +156,7 @@ contract ImpactVault is ERC4626, Ownable2Step, IImpactVault {
     }
 
     /// @dev Calls CollectDonations and returns result of _convertToAssets
-    function collectDonationsAndConvertToAssets(
+    function _collectDonationsAndConvertToAssets(
         uint256 shares,
         Math.Rounding rounding
     ) internal returns (uint256) {
@@ -198,7 +198,7 @@ contract ImpactVault is ERC4626, Ownable2Step, IImpactVault {
         uint256 shares,
         address receiver
     ) public override(ERC4626) returns (uint256) {
-        uint256 assets = collectDonationsAndConvertToAssets(
+        uint256 assets = _collectDonationsAndConvertToAssets(
             shares,
             Math.Rounding.Up
         );
@@ -236,7 +236,7 @@ contract ImpactVault is ERC4626, Ownable2Step, IImpactVault {
         address receiver,
         address owner
     ) public override(ERC4626) returns (uint256) {
-        uint256 assets = collectDonationsAndConvertToAssets(
+        uint256 assets = _collectDonationsAndConvertToAssets(
             shares,
             Math.Rounding.Down
         );
