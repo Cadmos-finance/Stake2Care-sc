@@ -17,20 +17,23 @@ Deposits into the ImpactVault are further mediated by the LidoImpactVaultDeposit
 # TEST Results
 
 
-  Impact Vault
-    ✔ Deployer has correct STETH balance at test start and can set STETH accrual
-    ✔ Only deployer can set STETH accrual and call the mint function
-    ✔ Anyone can submit by sending ETH directly to the StETH contract
-    ✔ Deployer has correct MSF-STETH balance at test start
-    ✔ Depositor can Mint Asset by sending ETH to receive() of lidoImpactVaultDepositor and then Withdraw
-    ✔ Depositor can Mint Asset by sending StETH via depositAsset() function of lidoImpactVaultDepositor
-    ✔ Depositor can Mint Asset by sending ETH to depositETH() of lidoImpactVaultDepositor with a depositProportion of 80%
-    ✔ depositToken() should revert with NotImplementedError
-    ✔ Only owner can set AutoCollectThreshold
-    ✔ Depositor can mint shares by sending ETH via mint() of impactVault and then withdraw
-    ✔ collectDonations is timelocked for 1 day after second deposit
-    ✔ collectDonations does not update pending surplus if it is below autoCollectThreshold
-    ✔ collectDonations can be called with custom minimalTransfer to bypass minimalCollectAmount
+## Impact Vault
+
+- ✔ Deployer has correct STETH balance at test start and can set STETH accrual
+- ✔ Only deployer can set STETH accrual and call the mint function
+- ✔ Anyone can submit by sending ETH directly to the StETH contract
+- ✔ Deployer has correct MSF-STETH balance at test start
+- ✔ Depositor can Mint Asset by sending ETH to `receive()` of `lidoImpactVaultDepositor` and then Withdraw
+- ✔ Depositor can Mint Asset by sending StETH via `depositAsset()` function of `lidoImpactVaultDepositor`
+- ✔ Depositor can Mint Asset by sending ETH to `depositETH()` of `lidoImpactVaultDepositor` with a depositProportion of 80%
+- ✔ `depositToken()` should revert with `NotImplementedError`
+- ✔ Only owner can set AutoCollectThreshold
+- ✔ Depositor can mint shares by sending ETH via `mint()` of `impactVault` and then withdraw
+- ✔ `collectDonations` is timelocked for 1 day after second deposit
+- ✔ `collectDonations` does not update pending surplus if it is below autoCollectThreshold
+- ✔ `collectDonations` can be called with custom minimalTransfer to bypass minimalCollectAmount
+
+```
 
 ·--------------------------------------------------------|---------------------------|--------------|-----------------------------·
 |                  [90mSolc version: 0.8.19[39m                  ·  [90mOptimizer enabled: true[39m  ·  [90mRuns: 1000[39m  ·  [90mBlock limit: 30000000 gas[39m  │
@@ -71,5 +74,5 @@ Deposits into the ImpactVault are further mediated by the LidoImpactVaultDeposit
 ·--------------------------------------------------------|-------------|-------------|--------------|---------------|-------------·
 
   13 passing (2s)
-
+```
 
