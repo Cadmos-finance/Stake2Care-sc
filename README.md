@@ -2,11 +2,11 @@
 
 ## Intro
 
-The ImpactVault smart contract is an ERC 4626 Vault, which is used to donate the revenues of a value-accruing token to a NGO. In the present case, users will deposit Lido ST-ETH and the staking yield will be distributed to Doctors Without Borders (DWB).
+The ImpactVault smart contract is an ERC 4626 Vault, which is used to donate the revenues of a value-accruing token to a NGO. In the present case, users will deposit Lido ST-ETH and the staking yield will be distributed to Doctors Without Borders (MSF).
 
-On Deposit of STETH, the user receives MSF-STETH. Withdrawals are instantaneous and handled in STETH only.
+On Deposit of stETH, the user receives msfETH. Withdrawals are instantaneous and handled in stETH only.
 
-Deposits into the ImpactVault are further mediated by the LidoImpactVaultDepositor to convert-and-deposit ETH as well. When converting ETH, the user can choose which proportion of the obtained STETH is to be deposited into the Impact Vault while the remainder is sent back to them.
+Deposits into the ImpactVault are further mediated by the LidoImpactVaultDepositor to convert-and-deposit ETH as well. When converting ETH, the user can choose which proportion of the obtained stETH is to be deposited into the Impact Vault while the remainder is sent back to them.
 
 ## getting started
 
@@ -19,12 +19,12 @@ Deposits into the ImpactVault are further mediated by the LidoImpactVaultDeposit
 
 ## Impact Vault
 
-- ✔ Deployer has correct STETH balance at test start and can set STETH accrual
-- ✔ Only deployer can set STETH accrual and call the mint function
-- ✔ Anyone can submit by sending ETH directly to the StETH contract
-- ✔ Deployer has correct MSF-STETH balance at test start
+- ✔ Deployer has correct stETH balance at test start and can set stETH accrual
+- ✔ Only deployer can set stETH accrual and call the mint function
+- ✔ Anyone can submit by sending ETH directly to the stETH contract
+- ✔ Deployer has correct msfETH balance at test start
 - ✔ Depositor can Mint Asset by sending ETH to `receive()` of `lidoImpactVaultDepositor` and then Withdraw
-- ✔ Depositor can Mint Asset by sending StETH via `depositAsset()` function of `lidoImpactVaultDepositor`
+- ✔ Depositor can Mint Asset by sending stETH via `depositAsset()` function of `lidoImpactVaultDepositor`
 - ✔ Depositor can Mint Asset by sending ETH to `depositETH()` of `lidoImpactVaultDepositor` with a depositProportion of 80%
 - ✔ `depositToken()` should revert with `NotImplementedError`
 - ✔ Only owner can set AutoCollectThreshold
@@ -58,11 +58,11 @@ Deposits into the ImpactVault are further mediated by the LidoImpactVaultDeposit
 ·····························|···························|·············|·············|··············|···············|··············
 |  LidoImpactVaultDepositor  ·  depositETH               ·          -  ·          -  ·      120852  ·            3  ·          -  │
 ·····························|···························|·············|·············|··············|···············|··············
-|  TestStETH                 ·  approve                  ·      46271  ·      46283  ·       46282  ·           17  ·          -  │
+|  TeststETH                 ·  approve                  ·      46271  ·      46283  ·       46282  ·           17  ·          -  │
 ·····························|···························|·············|·············|··············|···············|··············
-|  TestStETH                 ·  changeAccrual            ·          -  ·          -  ·       28696  ·           16  ·          -  │
+|  TeststETH                 ·  changeAccrual            ·          -  ·          -  ·       28696  ·           16  ·          -  │
 ·····························|···························|·············|·············|··············|···············|··············
-|  TestStETH                 ·  mint                     ·          -  ·          -  ·       70492  ·           13  ·          -  │
+|  TeststETH                 ·  mint                     ·          -  ·          -  ·       70492  ·           13  ·          -  │
 ·····························|···························|·············|·············|··············|···············|··············
 |  Deployments                                           ·                                          ·  % of limit   ·             │
 ·························································|·············|·············|··············|···············|··············
@@ -70,7 +70,7 @@ Deposits into the ImpactVault are further mediated by the LidoImpactVaultDeposit
 ·························································|·············|·············|··············|···············|··············
 |  LidoImpactVaultDepositor                              ·     625478  ·     625490  ·      625489  ·        2.1 %  ·          -  │
 ·························································|·············|·············|··············|···············|··············
-|  TestStETH                                             ·          -  ·          -  ·      946243  ·        3.2 %  ·          -  │
+|  TeststETH                                             ·          -  ·          -  ·      946243  ·        3.2 %  ·          -  │
 ·--------------------------------------------------------|-------------|-------------|--------------|---------------|-------------·
 
   13 passing (2s)
@@ -85,7 +85,7 @@ File                           |  % Stmts | % Branch |  % Funcs |  % Lines |Unco
   ImpactVaultDepositor.sol     |    77.78 |      100 |      100 |    77.78 |107,108,109,110 |
   LidoImpactVaultDepositor.sol |      100 |      100 |      100 |      100 |                |
   TokenBatchTransfer.sol       |        0 |        0 |        0 |        0 |... 50,59,61,62 |
-  testStEth.sol                |      100 |      100 |      100 |      100 |                |
+  teststETH.sol                |      100 |      100 |      100 |      100 |                |
   vanillaERC20.sol             |        0 |      100 |        0 |        0 |             13 |
  src/intf/                     |      100 |      100 |      100 |      100 |                |
   IImpactVault.sol             |      100 |      100 |      100 |      100 |                |
