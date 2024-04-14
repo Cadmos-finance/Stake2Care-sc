@@ -1,4 +1,4 @@
-# ImpactVault smart contract - ARAB BANK Stake2Care Project
+# ImpactVault smart contract - Arab Bank Switzerland Stake2Care Project
 
 ## Intro
 
