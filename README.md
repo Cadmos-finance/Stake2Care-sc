@@ -9,7 +9,7 @@ On Deposit of stETH, the user receives MSF-ETH. Withdrawals are instantaneous an
 Deposits into the ImpactVault are further mediated by the LidoImpactVaultDepositor to convert-and-deposit ETH as well. When converting ETH, the user can choose which proportion of the obtained stETH is to be deposited into the Impact Vault while the remainder is sent back to them.
 
 
-<img width="1168" alt="Capture d’écran 2023-07-19 à 14 26 46" src="assets/HowItWorks.png">
+<img width="1168" alt="How It Works" src="assets/HowItWorks.png">
 
 ## Getting started
 
