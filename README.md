@@ -1,38 +1,21 @@
-<<<<<<< HEAD
-# ImpactVault smart contract - ARAB BANK Stake2Care Project
-
-## Intro
-
-The ImpactVault smart contract is an ERC 4626 Vault, which is used to donate the revenues of a value-accruing token to a NGO. In the present case, users will deposit Lido ST-ETH and the staking yield will be distributed to Doctors Without Borders (DWB).
-
-On Deposit of STETH, the user receives MSF-STETH. Withdrawals are instantaneous and handled in STETH only.
-
-Deposits into the ImpactVault are further mediated by the LidoImpactVaultDepositor to convert-and-deposit ETH as well. When converting ETH, the user can choose which proportion of the obtained STETH is to be deposited into the Impact Vault while the remainder is sent back to them.
-
-## getting started
-
-- install `npm i`
-- build contract using solidity : `npm run build`
-- run tests `npm run test`
-=======
 # ImpactVault smart contract - Arab Bank Switzerland Stake2Care Project
 
 ## Intro
 
 The ImpactVault smart contract is an ERC 4626 Vault, which is used to donate the revenues of a value-accruing token to a NGO. In the present case, users will deposit Lido ST-ETH and the staking yield will be distributed to Doctors Without Borders (MSF).
 
-On Deposit of stETH, the user receives msfETH. Withdrawals are instantaneous and handled in stETH only.
+On Deposit of stETH, the user receives MSF-ETH. Withdrawals are instantaneous and handled in stETH only.
 
 Deposits into the ImpactVault are further mediated by the LidoImpactVaultDepositor to convert-and-deposit ETH as well. When converting ETH, the user can choose which proportion of the obtained stETH is to be deposited into the Impact Vault while the remainder is sent back to them.
 
-## getting started
+
+<img width="1168" alt="Capture d’écran 2023-07-19 à 14 26 46" src="assets/HowItWorks.png">
+
+## Getting started
 
 - install `npm i`
 - build contract using solidity : `npm run build`
 - run tests `npm run test`
-
-# TEST Results
-
 
 ## Impact Vault
 
@@ -97,21 +80,16 @@ Deposits into the ImpactVault are further mediated by the LidoImpactVaultDeposit
 -------------------------------|----------|----------|----------|----------|----------------|
 File                           |  % Stmts | % Branch |  % Funcs |  % Lines |Uncovered Lines |
 -------------------------------|----------|----------|----------|----------|----------------|
- src/                          |       80 |    52.63 |    81.82 |    79.31 |                |
+ src/                          |       96 |      100 |      100 |    94.52 |                |
   ImpactVault.sol              |      100 |      100 |      100 |      100 |                |
   ImpactVaultDepositor.sol     |    77.78 |      100 |      100 |    77.78 |107,108,109,110 |
   LidoImpactVaultDepositor.sol |      100 |      100 |      100 |      100 |                |
-  TokenBatchTransfer.sol       |        0 |        0 |        0 |        0 |... 50,59,61,62 |
-  teststETH.sol                |      100 |      100 |      100 |      100 |                |
-  vanillaERC20.sol             |        0 |      100 |        0 |        0 |             13 |
+  testStEth.sol                |      100 |      100 |      100 |      100 |                |
  src/intf/                     |      100 |      100 |      100 |      100 |                |
   IImpactVault.sol             |      100 |      100 |      100 |      100 |                |
   IImpactVaultDepositor.sol    |      100 |      100 |      100 |      100 |                |
 -------------------------------|----------|----------|----------|----------|----------------|
-All files                      |       80 |    52.63 |    81.82 |    79.31 |                |
+All files                      |       96 |      100 |      100 |    94.52 |                |
 -------------------------------|----------|----------|----------|----------|----------------|
-
-
 ```
 
->>>>>>> f289810dc4c317ff3574f9595842f5bc64f84f2d
