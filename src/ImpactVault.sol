@@ -25,7 +25,7 @@ pragma solidity 0.8.19;
 // ===============================================================================================
 // ======================================  ImpactVault  =========================================
 // ===============================================================================================
-// ARAB BANK: https://github.com/ArabBankSwitzerland
+// ARAB BANK SWITZZERLAND: https://github.com/ArabBankSwitzerland
 // CADMOS: https://github.com/Cadmos-finance
 
 // Primary Author(s)
