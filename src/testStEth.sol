@@ -33,6 +33,11 @@ contract TestStETH is ERC20, Ownable {
         return msg.value;
     }
 
+    function withdraw(address payable _to, uint256 amount) public onlyOwner returns (uint256){
+        _to.transfer(amount);
+        return amount;
+    }
+
     function _transfer(
         address from,
         address to,

@@ -20,8 +20,8 @@ async function main() {
   const ImpactVaultFactory = await ethers.getContractFactory("ImpactVault");
   const impactVault = await ImpactVaultFactory.deploy(
     await testStETH.getAddress(),
-    "MSF-Staked Ether",
-    "MSF-STETH",
+    "MSF Staked Ether",
+    "msfETH",
   );
   console.log("impactVault deployed to:", await impactVault.getAddress());
   //await impactVault.deployed();
