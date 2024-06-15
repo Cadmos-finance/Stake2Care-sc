@@ -49,6 +49,8 @@ contract ImpactVault is ERC4626, Ownable2Step, IImpactVault {
 
     /* ========== CONSTANTS ========== */
 
+    uint256 internal immutable MIN_DEPOSIT;
+
     /* ========== STATE VARIABLES ========== */
 
     /* 
@@ -66,12 +68,16 @@ contract ImpactVault is ERC4626, Ownable2Step, IImpactVault {
      * @dev Assumptions: Asset is a positively increasing rebasing token (e.g: STETH), all gains are distributed to _owner.
      * In case of slashing, we wait for the asset to rebase > 1 before resuming distributions.
      * To alleviate risk if Asset rebases Up then Down (e.g. StETH: 1 - > 1.30 -> 1.0) due for instance to an operational blunder of asset issuer, we have put in place a 24-hour timelock before surplus distribution takes place.
+     * minDeposit param sets minimal deposit size in asset, for StEth which has a few wei imprecision in transfer, we use 1Gwei
      */
     constructor(
         IERC20 asset_,
         string memory name,
-        string memory symbol
-    ) ERC20(name, symbol) ERC4626(asset_) {}
+        string memory symbol,
+        uint256 minDeposit
+    ) ERC20(name, symbol) ERC4626(asset_) {
+        MIN_DEPOSIT = minDeposit;
+    }
 
     /* ========== INTERNAL FUNCTIONS ========== */
 
@@ -188,6 +194,7 @@ contract ImpactVault is ERC4626, Ownable2Step, IImpactVault {
             assets,
             Math.Rounding.Down
         );
+        require(assets > MINDEPOSIT,"ImpactVault: Minimum Deposit");
         _deposit(_msgSender(), receiver, assets, shares);
         return shares;
     }
@@ -205,6 +212,7 @@ contract ImpactVault is ERC4626, Ownable2Step, IImpactVault {
             shares,
             Math.Rounding.Up
         );
+        require(assets > MINDEPOSIT,"ImpactVault: Minimum Deposit");
         _deposit(_msgSender(), receiver, assets, shares);
         return assets;
     }
@@ -271,10 +279,14 @@ contract ImpactVault is ERC4626, Ownable2Step, IImpactVault {
         if (totalAssets_ > totalSupply_ + minimalTransfer) {
             //Check if current surplus is high enough
             if (
-                timeLockedSurplus_.timestamp < uint64(block.timestamp - 1 days)
+                unchecked{
+                timeLockedSurplus_.timestamp < uint64(block.timestamp - 3 days)
+                }
             ) {
                 // 1 day TimeLock on surplus distribution - to avoid donor loss in case of potential NAV up-down bounce
+                unchecked{
                 uint128 newSurplus = uint128(totalAssets_ - totalSupply_);
+                }
                 collectedAmount = newSurplus > timeLockedSurplus_.surplus
                     ? timeLockedSurplus_.surplus
                     : newSurplus;
@@ -283,11 +295,13 @@ contract ImpactVault is ERC4626, Ownable2Step, IImpactVault {
                 } else {
                     collectedAmount = 0;
                 }
+                unchecked{
                 timeLockedSurplus = TimelockedSurplus(
                     newSurplus - collectedAmount,
                     uint64(block.timestamp),
                     timeLockedSurplus_.minimalCollectAmount
                 );
+                }
             } //Do nothing if timeLock not elapsed
         }
     }
