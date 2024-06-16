@@ -194,7 +194,7 @@ contract ImpactVault is ERC4626, Ownable2Step, IImpactVault {
             assets,
             Math.Rounding.Down
         );
-        require(assets > MINDEPOSIT,"ImpactVault: Minimum Deposit");
+        require(assets > MIN_DEPOSIT,"ImpactVault: Minimum Deposit");
         _deposit(_msgSender(), receiver, assets, shares);
         return shares;
     }
@@ -212,7 +212,7 @@ contract ImpactVault is ERC4626, Ownable2Step, IImpactVault {
             shares,
             Math.Rounding.Up
         );
-        require(assets > MINDEPOSIT,"ImpactVault: Minimum Deposit");
+        require(assets > MIN_DEPOSIT,"ImpactVault: Minimum Deposit");
         _deposit(_msgSender(), receiver, assets, shares);
         return assets;
     }
@@ -278,15 +278,12 @@ contract ImpactVault is ERC4626, Ownable2Step, IImpactVault {
             : minimalTransfer;
         if (totalAssets_ > totalSupply_ + minimalTransfer) {
             //Check if current surplus is high enough
-            if (
-                unchecked{
-                timeLockedSurplus_.timestamp < uint64(block.timestamp - 3 days)
-                }
-            ) {
+            bool sufficientTransfer;
+            unchecked{sufficientTransfer=timeLockedSurplus_.timestamp < uint64(block.timestamp - 3 days);}
+            if (sufficientTransfer) {
                 // 1 day TimeLock on surplus distribution - to avoid donor loss in case of potential NAV up-down bounce
-                unchecked{
-                uint128 newSurplus = uint128(totalAssets_ - totalSupply_);
-                }
+                uint128 newSurplus;
+                unchecked{newSurplus = uint128(totalAssets_ - totalSupply_);}
                 collectedAmount = newSurplus > timeLockedSurplus_.surplus
                     ? timeLockedSurplus_.surplus
                     : newSurplus;
@@ -295,13 +292,12 @@ contract ImpactVault is ERC4626, Ownable2Step, IImpactVault {
                 } else {
                     collectedAmount = 0;
                 }
-                unchecked{
+                unchecked{newSurplus -= collectedAmount;}
                 timeLockedSurplus = TimelockedSurplus(
-                    newSurplus - collectedAmount,
+                    newSurplus,
                     uint64(block.timestamp),
                     timeLockedSurplus_.minimalCollectAmount
                 );
-                }
             } //Do nothing if timeLock not elapsed
         }
     }

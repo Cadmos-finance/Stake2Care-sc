@@ -3,7 +3,7 @@ import {
   ImpactVault,
   LidoImpactVaultDepositor,
 } from "../typechain-types";
-import { Signer } from "ethers";
+import { Signer, toBigInt } from "ethers";
 import { ethers } from "hardhat";
 import { expect } from "chai";
 
@@ -30,6 +30,7 @@ describe("Impact Vault", async () => {
       await testStETH.getAddress(),
       "MSF-Staked Ether",
       "MSF-STETH",
+      "1000000000",
     );
 
     let LidoImpactVaultDepositorFactory = await ethers.getContractFactory(
@@ -97,6 +98,61 @@ describe("Impact Vault", async () => {
     expect(await impactVault.balanceOf(deployer.getAddress())).to.equal(
       ethers.parseEther("0.1"),
     );
+  });
+
+  it("ImpactVault has minimum deposit limit of 1GWei", async () => {
+    const tx = await depositor.sendTransaction({
+      to: await testStETH.getAddress(),
+      value: ethers.parseEther("10"), // 10 ETH
+    });
+    await tx.wait();
+
+    const tx2 = await testStETH
+      .connect(depositor)
+      .approve(
+        await impactVault.getAddress(),
+        ethers.parseEther("10"),
+      );
+    await tx2.wait();
+
+    const gwei = "1000000000";
+    await expect(
+        impactVault.deposit(
+        gwei,
+        await depositor.getAddress(),
+      ),
+    ).to.be.reverted
+
+    await expect(
+      impactVault.mint(
+      gwei,
+      await depositor.getAddress(),
+      ),
+    ).to.be.reverted
+
+    const tx3 = await impactVault
+    .connect(depositor)
+    .deposit("1000000001",
+      await depositor.getAddress(),
+    ); // deposits gwei + 1 wei
+    await tx3.wait();
+
+    expect(await impactVault.balanceOf(depositor.getAddress())).to.equal(
+      "1000000001",
+    ); // received gwei + 1 wei MSF-STETH in exchange
+
+
+    const tx4 = await impactVault
+    .connect(depositor)
+    .mint("1000000001",
+      await depositor.getAddress(),
+    ); // deposits 10 StETH
+    await tx4.wait();
+
+    expect(await impactVault.balanceOf(depositor.getAddress())).to.equal(
+    "2000000002",
+    ); // received gwei + 1 wei MSF-STETH in exchange
+
   });
 
   it("Depositor can Mint Asset by sending ETH to receive() of lidoImpactVaultDepositor and then Withdraw", async () => {
@@ -311,7 +367,7 @@ describe("Impact Vault", async () => {
     ); // -1 wei because of rounding down error
   });
 
-  it("collectDonations is timelocked for 1 day after second deposit", async () => {
+  it("collectDonations is timelocked for 3 days after second deposit", async () => {
     const tx = await testStETH
       .connect(deployer)
       .changeAccrual(ethers.parseEther("1.2")); // we increase value above 1
@@ -342,7 +398,7 @@ describe("Impact Vault", async () => {
       ethers.parseEther("12000"),
     ); // surplus not yet distributed (timelock)
 
-    await ethers.provider.send("evm_increaseTime", [3600 * 24]); // 24 hours pass
+    await ethers.provider.send("evm_increaseTime", [3600 * 72]); // 72 hours pass
 
     const tx4 = await depositor.sendTransaction({
       to: await lidoImpactVaultDepositor.getAddress(),

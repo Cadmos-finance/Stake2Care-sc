@@ -6,6 +6,8 @@ require("dotenv").config({ path: path.resolve(__dirname, "../.env") });
 
 const WAIT_BLOCK_CONFIRMATION = 10;
 
+const MINIMAL_DEPOSIT = "1000000000";
+
 async function main() {
   let jsonAddresses: { [key: string]: string } = {};
   const accounts = await ethers.getSigners();
@@ -22,6 +24,7 @@ async function main() {
     await testStETH.getAddress(),
     "MSF Staked Ether",
     "msfETH",
+    MINIMAL_DEPOSIT,
   );
   console.log("impactVault deployed to:", await impactVault.getAddress());
   //await impactVault.deployed();
