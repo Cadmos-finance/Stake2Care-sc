@@ -36,6 +36,9 @@ import "@openzeppelin/contracts/interfaces/IERC20Metadata.sol";
 /// @author N.B.
 /// @notice Used to donate gains stemming from a positively rebasing token
 interface IImpactVault is IERC20Metadata {
+
+    error DepositTooLow();
+
     struct TimelockedSurplus {
         uint128 surplus; // TimeLocked surplus - distributable at timelock expiry (1 day)
         uint64 timestamp; // Ok until 2554  - timestamp when surplus was timelocked

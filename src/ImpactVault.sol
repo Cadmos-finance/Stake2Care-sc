@@ -69,6 +69,7 @@ contract ImpactVault is ERC4626, Ownable2Step, IImpactVault {
      * In case of slashing, we wait for the asset to rebase > 1 before resuming distributions.
      * To alleviate risk if Asset rebases Up then Down (e.g. StETH: 1 - > 1.30 -> 1.0) due for instance to an operational blunder of asset issuer, we have put in place a 24-hour timelock before surplus distribution takes place.
      * minDeposit param sets minimal deposit size in asset, for StEth which has a few wei imprecision in transfer, we use 1Gwei
+     * @dev On deployment it is recommended to make a donation of MIN_DEPOSIT to the vault to prevent potential rounding issues in the future
      */
     constructor(
         IERC20 asset_,
@@ -194,7 +195,9 @@ contract ImpactVault is ERC4626, Ownable2Step, IImpactVault {
             assets,
             Math.Rounding.Down
         );
-        require(assets > MIN_DEPOSIT,"ImpactVault: Minimum Deposit");
+        if (assets <= MIN_DEPOSIT){
+            revert DepositTooLow();
+        }
         _deposit(_msgSender(), receiver, assets, shares);
         return shares;
     }
@@ -212,7 +215,9 @@ contract ImpactVault is ERC4626, Ownable2Step, IImpactVault {
             shares,
             Math.Rounding.Up
         );
-        require(assets > MIN_DEPOSIT,"ImpactVault: Minimum Deposit");
+        if (assets <= MIN_DEPOSIT){
+            revert DepositTooLow();
+        }
         _deposit(_msgSender(), receiver, assets, shares);
         return assets;
     }
