@@ -55,8 +55,8 @@ contract ImpactVault is ERC4626, Ownable2Step, IImpactVault {
 
     /* 
     struct TimelockedSurplus {
-        uint128 surplus; // TimeLocked surplus - distributable at timelock expiry (1 day)
-        uint64 timestamp; // Ok until 2554  - timestamp when surplus was timelocked
+        uint128 surplus; // TimeLocked surplus - distributable at timelock expiry (3 day)
+        uint64 timestamp; // Ok until year 2554  - timestamp when surplus was timelocked
         uint64 minimalCollectAmount; // Minimal Amount to auto-Collect at each deposit/ withdrawal - can be set by _owner. uint64 -> ~ 18 wad
     }
     */
@@ -184,6 +184,7 @@ contract ImpactVault is ERC4626, Ownable2Step, IImpactVault {
 
     /** @dev See {IERC4626-deposit}. */
     /// @notice  Deposit amount from msg.sender of asset into the vault and sends obtained tokens to receiver
+    /// @notice Due to stETH internal mechanics, user may deposit one or two wei less than expected; see https://docs.lido.fi/guides/lido-tokens-integration-guide#1-2-wei-corner-case
     /// @dev normally asset is positively rebasing and we obtain 1 vault share per deposited asset, we however adjust the price if there was an adverse rebasing
     /// @param assets Amount of Asset to Deposit
     /// @param receiver Address receiving freshly minted vault tokens
@@ -204,6 +205,7 @@ contract ImpactVault is ERC4626, Ownable2Step, IImpactVault {
 
     /** @dev See {IERC4626-mint}. */
     /// @notice  Mint shares to receiver against assets from msg.sender
+    /// @notice Due to stETH internal mechanics, user may deposit one or two wei less than expected; see https://docs.lido.fi/guides/lido-tokens-integration-guide#1-2-wei-corner-case
     /// @dev normally asset is positively rebasing and we obtain 1 vault share per deposited asset, we however adjust the price if there was an adverse rebasing
     /// @param shares Amount of Shares to obtain
     /// @param receiver Address receiving freshly minted vault tokens
@@ -224,6 +226,7 @@ contract ImpactVault is ERC4626, Ownable2Step, IImpactVault {
 
     /** @dev See {IERC4626-withdraw}. */
     /// @notice Withdraws assets to receiver address against owner vault shares
+    /// @notice Due to stETH internal mechanics, user may receive one or two wei less than expected; see https://docs.lido.fi/guides/lido-tokens-integration-guide#1-2-wei-corner-case
     /// @dev normally asset is positively rebasing and we obtain 1 asset per canceled vault share, we however adjust the price if there was an adverse rebasing
     /// @param assets Amount of Assets to obtain
     /// @param receiver Address receiving the withdrawn assets
@@ -243,6 +246,7 @@ contract ImpactVault is ERC4626, Ownable2Step, IImpactVault {
 
     /** @dev See {IERC4626-redeem}. */
     /// @notice Cancels amount shares of msg.sender and withdraws asset
+    /// @notice Due to stETH internal mechanics, user may receive one or two wei less than expected; see https://docs.lido.fi/guides/lido-tokens-integration-guide#1-2-wei-corner-case
     /// @dev normally asset is positively rebasing and we obtain 1 asset per canceled vault share, we however adjust the price if there was an adverse rebasing
     /// @param shares Amount of Vault Shares to Cancel
     /// @param receiver Address receiving the withdrawn assets
@@ -284,9 +288,9 @@ contract ImpactVault is ERC4626, Ownable2Step, IImpactVault {
         if (totalAssets_ > totalSupply_ + minimalTransfer) {
             //Check if current surplus is high enough
             bool sufficientTransfer;
-            unchecked{sufficientTransfer=timeLockedSurplus_.timestamp < uint64(block.timestamp - 3 days);}
+            unchecked{sufficientTransfer=timeLockedSurplus_.timestamp < uint64(block.timestamp);}
             if (sufficientTransfer) {
-                // 1 day TimeLock on surplus distribution - to avoid donor loss in case of potential NAV up-down bounce
+                // 3 day TimeLock on surplus distribution - to avoid donor loss in case of potential NAV up-down bounce
                 uint128 newSurplus;
                 unchecked{newSurplus = uint128(totalAssets_ - totalSupply_);}
                 collectedAmount = newSurplus > timeLockedSurplus_.surplus
@@ -297,12 +301,13 @@ contract ImpactVault is ERC4626, Ownable2Step, IImpactVault {
                 } else {
                     collectedAmount = 0;
                 }
-                unchecked{newSurplus -= collectedAmount;}
+                unchecked{
                 timeLockedSurplus = TimelockedSurplus(
-                    newSurplus,
-                    uint64(block.timestamp),
+                    newSurplus - collectedAmount,
+                    uint64(block.timestamp + 3 days),
                     timeLockedSurplus_.minimalCollectAmount
                 );
+            }
             } //Do nothing if timeLock not elapsed
         }
     }
