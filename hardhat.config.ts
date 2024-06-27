@@ -3,7 +3,7 @@ import "@nomicfoundation/hardhat-toolbox";
 import "hardhat-contract-sizer";
 import "dotenv/config";
 
-const RPC_URL = process.env.SEPOLIA_URL || "rpc";
+const RPC_URL = process.env.ETH_URL || "rpc";
 const PRIVATE_KEY = process.env.PRIVATE_KEY || "privatKey";
 
 const config: HardhatUserConfig = {

@@ -16,8 +16,24 @@ Deposits into the ImpactVault are further mediated by the LidoImpactVaultDeposit
 - install `npm i`
 - build contract using solidity : `npm run build`
 - run tests `npm run test`
+- deploy `npx hardhat run scripts/deploy.ts --network mainnet`
 
-## Impact Vault
+## Audits
+You can find all audit reports under the audits folder
+
+- [BlackPaper](./audits/25-06-2024_BlackPaper.pdf)
+- [HHK](./audits/17-06-2024_HHK.pdf)
+
+
+## Deployment Addresses
+
+Contracts have been deployed to Ethereum Mainnet
+
+- msfETH (ImpactVault): [0x34f4e4b964a3e648723aE71AF5550FbC85E2e534](https://etherscan.io/address/0x34f4e4b964a3e648723aE71AF5550FbC85E2e534)
+- ImpactVaultDepositor: [0xcf366FCc47dd213B8dF0663c9815B99BbF2B5863](https://etherscan.io/address/0xcf366FCc47dd213B8dF0663c9815B99BbF2B5863)
+
+
+## Tests
 
 - ✔ Deployer has correct stETH balance at test start and can set stETH accrual
 - ✔ Only deployer can set stETH accrual and call the mint function
@@ -29,7 +45,7 @@ Deposits into the ImpactVault are further mediated by the LidoImpactVaultDeposit
 - ✔ `depositToken()` should revert with `NotImplementedError`
 - ✔ Only owner can set AutoCollectThreshold
 - ✔ Depositor can mint shares by sending ETH via `mint()` of `impactVault` and then withdraw
-- ✔ `collectDonations` is timelocked for 1 day after second deposit
+- ✔ `collectDonations` is timelocked for 3 days after second deposit
 - ✔ `collectDonations` does not update pending surplus if it is below autoCollectThreshold
 - ✔ `collectDonations` can be called with custom minimalTransfer to bypass minimalCollectAmount
 
@@ -75,7 +91,7 @@ Deposits into the ImpactVault are further mediated by the LidoImpactVaultDeposit
 
   13 passing (2s)
 ```
-## Coverage
+### Coverage
 ```
 -------------------------------|----------|----------|----------|----------|----------------|
 File                           |  % Stmts | % Branch |  % Funcs |  % Lines |Uncovered Lines |

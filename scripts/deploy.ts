@@ -14,14 +14,14 @@ async function main() {
   const deployer = accounts[0];
   const deployerAddress = await deployer.getAddress();
 
-  const TestStETHFactory = await ethers.getContractFactory("TestStETH");
-  const testStETH = await TestStETHFactory.deploy();
-  console.log("testStETH deployed to:", await testStETH.getAddress());
+  // const TestStETHFactory = await ethers.getContractFactory("TestStETH");
+  // const testStETH = await TestStETHFactory.deploy();
+  // console.log("testStETH deployed to:", await testStETH.getAddress());
   //await testStETH.deployed();
 
   const ImpactVaultFactory = await ethers.getContractFactory("ImpactVault");
   const impactVault = await ImpactVaultFactory.deploy(
-    await testStETH.getAddress(),
+    "0xae7ab96520de3a18e5e111b5eaab095312d7fe84",
     "MSF Staked Ether",
     "msfETH",
     MINIMAL_DEPOSIT,
@@ -42,10 +42,10 @@ async function main() {
     await lidoImpactVaultDepositor.getAddress(),
   );
 
-  await testStETH
-    .connect(deployer)
-    .mint(deployerAddress, ethers.parseEther("10000"));
-  console.log("Minted 10000e18 test STETH to :", deployerAddress);
+   // await testStETH
+    //  .connect(deployer)
+    //  .mint(deployerAddress, ethers.parseEther("10000"));
+   // console.log("Minted 10000e18 test STETH to :", deployerAddress);
 }
 
 // We recommend this pattern to be able to use async/await everywhere
