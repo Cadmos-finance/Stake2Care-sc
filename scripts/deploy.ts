@@ -33,7 +33,7 @@ async function main() {
     "LidoImpactVaultDepositor",
   );
   const lidoImpactVaultDepositor = await LidoImpactVaultDepositorFactory.deploy(
-    await deployer.getAddress(),
+    "0x462F351EE8b10Cc21B161ad698eF3CEba957FE65",
     await impactVault.getAddress(),
   );
   // await lidoImpactVaultDepositor.deployed();

@@ -73,6 +73,7 @@ contract LidoImpactVaultDepositor is ImpactVaultDepositor {
         override(ImpactVaultDepositor)
         returns (uint256 assetAmount)
     {
-        assetAmount = Lido(asset).submit{value: msg.value}(_lidoReferral);
+        Lido(asset).submit{value: msg.value}(_lidoReferral);
+        assetAmount = IERC20(asset).balanceOf(address(this));
     }
 }
