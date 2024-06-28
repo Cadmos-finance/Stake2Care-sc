@@ -34,7 +34,7 @@ Contracts have been deployed to Ethereum Mainnet:
 
 ## Official Website
 
-Stake2Care official [website].(https://stake2care.msf.ch/)
+Stake2Care official [website](https://stake2care.msf.ch/).
 
 ## Tests
 
