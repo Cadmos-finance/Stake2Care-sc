@@ -30,7 +30,7 @@ You can find all audit reports under the audits folder
 Contracts have been deployed to Ethereum Mainnet
 
 - msfETH (ImpactVault): [0x34f4e4b964a3e648723aE71AF5550FbC85E2e534](https://etherscan.io/address/0x34f4e4b964a3e648723aE71AF5550FbC85E2e534)
-- ImpactVaultDepositor: [0xcf366FCc47dd213B8dF0663c9815B99BbF2B5863](https://etherscan.io/address/0xcf366FCc47dd213B8dF0663c9815B99BbF2B5863)
+- ImpactVaultDepositor: [0x24fA1BaE144Bd97aF2875AE782299B6549726437](https://etherscan.io/address/0x24fA1BaE144Bd97aF2875AE782299B6549726437)
 
 
 ## Tests
