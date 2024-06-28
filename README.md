@@ -19,7 +19,7 @@ Deposits into the ImpactVault are further mediated by the LidoImpactVaultDeposit
 - deploy `npx hardhat run scripts/deploy.ts --network mainnet`
 
 ## Audits
-You can find all audit reports under the audits folder
+You can find all audit reports under the audits folder:
 
 - [BlackPaper](./audits/25-06-2024_BlackPaper.pdf)
 - [HHK](./audits/17-06-2024_HHK.pdf)
@@ -27,14 +27,14 @@ You can find all audit reports under the audits folder
 
 ## Deployment Addresses
 
-Contracts have been deployed to Ethereum Mainnet
+Contracts have been deployed to Ethereum Mainnet:
 
 - msfETH (ImpactVault): [0x34f4e4b964a3e648723aE71AF5550FbC85E2e534](https://etherscan.io/address/0x34f4e4b964a3e648723aE71AF5550FbC85E2e534)
 - ImpactVaultDepositor: [0x24fA1BaE144Bd97aF2875AE782299B6549726437](https://etherscan.io/address/0x24fA1BaE144Bd97aF2875AE782299B6549726437)
 
 ## Official Website
 
-Stake2Care official [website](https://stake2care.msf.ch/)
+Stake2Care official [website].(https://stake2care.msf.ch/)
 
 ## Tests
 
