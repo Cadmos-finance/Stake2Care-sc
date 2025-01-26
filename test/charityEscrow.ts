@@ -915,7 +915,7 @@ describe("MSFPoint and CharityEscrow", function () {
       expect(lockDuration).to.equal(0);
     });
 
-    it("decreaseLock does an unlock, if newEffectiveLockDuration is null", async function () {
+    it("decreaseLock does an unlock, if newEffectiveLockDuration is null if decrease exceeds duration", async function () {
       await this.stEth.mint(
         await this.investorA.getAddress(),
         ethers.parseEther("100")
@@ -951,19 +951,37 @@ describe("MSFPoint and CharityEscrow", function () {
         .connect(this.investorA)
         .approve(
           await this.charityEscrow.getAddress(),
-          ethers.parseEther("50") * 1n * 2n * (1n + 3n * 2n)
+          ethers.parseEther("500") * 1n * 2n * (1n + 3n * 2n)
         );
       await this.charityEscrow
         .connect(this.investorA)
-        .decreaseLock(0n, 1n * 365n * 86400n); // 1 years second parameter, but could have used anything bigger than half a year (remaining lock)
-      const [lockedBalance, lockTimestamp, lockDuration] =
+        .decreaseLock(0n, 1n * 365n * 86400n /2n); // Half a year (remaining lock)
+      let [lockedBalance, lockTimestamp, lockDuration] =
         await this.charityEscrow.investorLockInfo(this.investorA.getAddress());
       expect(lockedBalance).to.equal(0);
       expect(lockTimestamp).to.equal(0);
       expect(lockDuration).to.equal(0);
+
+      // Second test - decrease greater than remaining duration
+      await this.charityEscrow
+            .connect(this.investorA)
+            .increaseLock(ethers.parseEther("50"), 2n * 365n * 86400n);
+      
+      await network.provider.send("evm_increaseTime", [548 * 86400]); // more than 1 year and a half passes
+
+      await this.charityEscrow
+            .connect(this.investorA)
+            .decreaseLock(0n, 3n * 365n * 86400n); // Try decreasing more than locked duration
+    
+      [lockedBalance, lockTimestamp, lockDuration] =
+            await this.charityEscrow.investorLockInfo(this.investorA.getAddress());
+          expect(lockedBalance).to.equal(0);
+          expect(lockTimestamp).to.equal(0);
+          expect(lockDuration).to.equal(0);
+    
     });
 
-    it("decreaseLock reduces all lockedBalance if newLockBalance is null", async function () {
+    it("decreaseLock reduces all lockedBalance if newLockBalance is null or if decrease exceeds balance", async function () {
       await this.stEth.mint(
         await this.investorA.getAddress(),
         ethers.parseEther("100")
@@ -984,6 +1002,7 @@ describe("MSFPoint and CharityEscrow", function () {
           ethers.parseEther("100")
         );
 
+      // First test - decrease exactly equal to balance
       await this.charityEscrow
         .connect(this.investorA)
         .increaseLock(ethers.parseEther("50"), 2n * 365n * 86400n);
@@ -999,16 +1018,83 @@ describe("MSFPoint and CharityEscrow", function () {
         .connect(this.investorA)
         .approve(
           await this.charityEscrow.getAddress(),
-          ethers.parseEther("50") * 1n * 2n * (1n + 3n * 2n)
+          ethers.parseEther("500") * 1n * 2n * (1n + 3n * 2n)
         );
       await this.charityEscrow
         .connect(this.investorA)
-        .decreaseLock(ethers.parseEther("100"), 0n); // using a greater or equal balance to decrease will put locked balance of the investorLock to 0
-      const [lockedBalance, lockTimestamp, lockDuration] =
+        .decreaseLock(ethers.parseEther("50"), 0n); // using a greater or equal balance to decrease will put locked balance of the investorLock to 0
+      let [lockedBalance, lockTimestamp, lockDuration] =
         await this.charityEscrow.investorLockInfo(this.investorA.getAddress());
       expect(lockedBalance).to.equal(0);
       expect(lockTimestamp).to.equal(0);
       expect(lockDuration).to.equal(0);
+
+      // Second test - decrease greater than balance
+      await this.charityEscrow
+            .connect(this.investorA)
+            .increaseLock(ethers.parseEther("50"), 2n * 365n * 86400n);
+      
+      await network.provider.send("evm_increaseTime", [548 * 86400]); // more than 1 year and a half passes
+
+      await this.charityEscrow
+            .connect(this.investorA)
+            .decreaseLock(ethers.parseEther("100"), 0n); // Try decreasing more than locked
+    
+      [lockedBalance, lockTimestamp, lockDuration] = await this.charityEscrow.investorLockInfo(this.investorA.getAddress());
+          expect(lockedBalance).to.equal(0);
+          expect(lockTimestamp).to.equal(0);
+          expect(lockDuration).to.equal(0);
+    });
+    it("decreaseLock reverts if new values are below minimums but non-zero", async function () {
+      await this.stEth.mint(
+          await this.investorA.getAddress(),
+          ethers.parseEther("100")
+      );
+      await this.stEth
+          .connect(this.investorA)
+          .approve(await this.impactVault.getAddress(), ethers.parseEther("100"));
+      await this.impactVault
+          .connect(this.investorA)
+          .deposit(ethers.parseEther("100"), await this.investorA.getAddress());
+      await this.impactVault
+          .connect(this.investorA)
+          .approve(
+              await this.charityEscrow.getAddress(),
+              ethers.parseEther("100")
+          );
+  
+      // Setup initial lock
+      await this.charityEscrow
+          .connect(this.investorA)
+          .increaseLock(ethers.parseEther("50"), 2n * 365n * 86400n);
+      
+      await this.msfp
+          .connect(this.investorA)
+          .approve(
+              await this.charityEscrow.getAddress(),
+              ethers.parseEther("1000")
+          );
+  
+      // Try to decrease to below minimum amount but above zero
+      await expect(
+          this.charityEscrow
+              .connect(this.investorA)
+              .decreaseLock(ethers.parseEther("49.9999999999999"), 0n)
+      ).to.be.revertedWithCustomError(this.charityEscrow, "LockAmountTooSmall");
+  
+      // Try to decrease to below minimum duration but above zero
+      await expect(
+          this.charityEscrow
+              .connect(this.investorA)
+              .decreaseLock(0n, 2n * 365n * 86400n - 86400n)
+      ).to.be.revertedWithCustomError(this.charityEscrow, "LockDurationTooShort");
+      
+      await network.provider.send("evm_increaseTime", [548 * 86400]); // more than 1 year and a half passes
+      
+      // But should succeed with full decrease
+      await this.charityEscrow
+          .connect(this.investorA)
+          .decreaseLock(ethers.parseEther("50"), 0n);
     });
   });
 });

@@ -292,7 +292,8 @@ contract CharityEscrow is ERC20, Ownable2Step, ICharityEscrow{
 
     ///@notice Reduces a lock - either in duration or in amount
     ///@notice pointPaid Points must be paid by the user to reduce the lock. - while baseReward is accrued - Time reward is completely lost and a global 10% penalty is applied
-    ///@dev Unlocks Amount if lockDurationDecrease places us below the minimumLockDuration
+    ///@dev Reverts if lockDurationDecrease places us below the minimumLockDuration or lockAmountDecrease below minimumLockAmount
+    ///@dev unlocks amount if lockDurationDecrease or lockAmountDecrease are greater than current values
     function decreaseLock(uint192 lockAmountDecrease, uint32 lockDurationDecrease) external override(ICharityEscrow) returns(uint256 pointPaid){
         LockInfo memory accountInfo = investorLockInfo[msg.sender];
         if(accountInfo.lockTimestamp + accountInfo.lockDuration <= block.timestamp){
@@ -302,11 +303,19 @@ contract CharityEscrow is ERC20, Ownable2Step, ICharityEscrow{
         }
 
         uint32 oldEffectiveLockDuration = accountInfo.lockTimestamp + accountInfo.lockDuration - uint32(block.timestamp);
-        lockDurationDecrease = lockDurationDecrease + minimumLockDuration > oldEffectiveLockDuration  ? oldEffectiveLockDuration : lockDurationDecrease;
+        lockDurationDecrease = lockDurationDecrease > oldEffectiveLockDuration  ? oldEffectiveLockDuration : lockDurationDecrease;
         uint32 newEffectiveLockDuration = oldEffectiveLockDuration - lockDurationDecrease;  
         uint192 oldLockBalance = accountInfo.lockedBalance;
-        lockAmountDecrease = lockAmountDecrease + minimumLockAmount > oldLockBalance ? oldLockBalance : lockAmountDecrease;
+        lockAmountDecrease = lockAmountDecrease > oldLockBalance ? oldLockBalance : lockAmountDecrease;
         uint192 newLockBalance = oldLockBalance - lockAmountDecrease;
+        if(newEffectiveLockDuration > 0 && newLockBalance > 0){
+            if(minimumLockDuration > newEffectiveLockDuration){
+                revert  LockDurationTooShort();
+            }
+            if(minimumLockAmount > newLockBalance){
+                revert  LockAmountTooSmall();
+            }
+         }
 
         pointPaid = computePointDecrease(oldLockBalance, accountInfo.lockTimestamp, accountInfo.lockDuration,  newLockBalance,  newEffectiveLockDuration);
         IMSFPoint(pointToken).burnFrom(
