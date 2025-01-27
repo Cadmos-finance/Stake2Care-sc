@@ -193,6 +193,16 @@ contract CharityEscrow is ERC20, Ownable2Step, ICharityEscrow{
         revert NotImplementedError();
     }
 
+    ///@notice Not transferrable
+    function increaseAllowance(address, uint256) public pure override(ERC20) returns (bool) {
+        revert NotImplementedError();
+    }
+
+    ///@notice Not transferrable
+    function decreaseAllowance(address, uint256) public pure override(ERC20) returns (bool) {
+        revert NotImplementedError();
+    }
+
     ///@notice Contract sells Points against ETH
     function buyPoints(uint256 amount) payable external override(ICharityEscrow){
         uint256 pointPrice_ = pointPrice;
