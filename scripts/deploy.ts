@@ -20,15 +20,18 @@ async function main() {
   //await testStETH.deployed();
 
   const ImpactVaultFactory = await ethers.getContractFactory("ImpactVault");
-  const impactVault = await ImpactVaultFactory.deploy(
+/*const impactVault = await ImpactVaultFactory.deploy(
     "0xae7ab96520de3a18e5e111b5eaab095312d7fe84",
     "MSF Staked Ether",
     "msfETH",
     MINIMAL_DEPOSIT,
-  );
-  console.log("impactVault deployed to:", await impactVault.getAddress());
+  );*/
+  
+  const impactVault = ImpactVaultFactory.attach("0x34f4e4b964a3e648723aE71AF5550FbC85E2e534");
+  //console.log("impactVault deployed to:", await impactVault.getAddress());
   //await impactVault.deployed();
 
+  /*
   const LidoImpactVaultDepositorFactory = await ethers.getContractFactory(
     "LidoImpactVaultDepositor",
   );
@@ -41,6 +44,34 @@ async function main() {
     "lidoImpactVaultDepositor deployed to:",
     await lidoImpactVaultDepositor.getAddress(),
   );
+  */
+  const MSFPointFactory = await ethers.getContractFactory("MSFPoint");
+
+  const MSFPoint = await MSFPointFactory.deploy("MSF-KARMA","KARMA");
+  console.log(
+    "KARMA deployed to:",
+    await MSFPoint.getAddress(),
+  );
+
+
+  const CharityEscrowFactory  = await ethers.getContractFactory("CharityEscrow");
+
+  const CharityEscrow = await CharityEscrowFactory.deploy(
+    await impactVault.getAddress(), 
+    await MSFPoint.getAddress(), 
+    ethers.parseEther("1"), 
+    ethers.parseEther("1"), 
+    ethers.parseEther("0.05"),
+    "Charity-Ecrow MSF Staked Ether",
+    "ce-msfETH"
+  );
+  console.log(
+    "CharityEscrow deployed to:",
+    await CharityEscrow.getAddress(),
+  );
+  await MSFPoint.waitForDeployment()
+
+  await MSFPoint.grantRole(await MSFPoint.MINTER_ROLE(), await CharityEscrow.getAddress());
 
    // await testStETH
     //  .connect(deployer)
