@@ -23,8 +23,8 @@ A precise whitepaper on the charity-escrow logic is available [here](./assets/Ch
 ## Getting started
 
 - install `npm i`
-- build contract using solidity : `npm run build`
-- run tests `npm run test`
+- build contract using solidity : `npx hardhat compile`
+- run tests `npx hardhat test`
 - deploy `npx hardhat run scripts/deploy.ts --network mainnet`
 
 ## Audits
