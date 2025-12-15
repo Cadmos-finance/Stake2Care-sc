@@ -529,6 +529,8 @@ contract ERC4626ImpactVault is ERC4626, Ownable2Step, IERC4626ImpactVault {
     /// @dev Does not collect if 3-day timeLocked surplus is less than minimalTransfer
     /// @dev At most collects Once a day
     /// @dev caller indicates minimalTransferAmount for computation to take place - if 0 is indicated we revert to default minimum (as registered in storage)
+    /// @dev can be reentered by underlyingvault; we assume underlying vault is trusted
+    /// @param minimalTransfer Minimal Transfer Amount to trigger collection
     function collectDonations(
         uint64 minimalTransfer
     )
@@ -599,6 +601,7 @@ contract ERC4626ImpactVault is ERC4626, Ownable2Step, IERC4626ImpactVault {
     }
 
     /// @notice Allows Owner to recover any ERC20 token mistakenly sent to the contract, except the underlying vault shares. Owner CAN sweep the underlying asset token.
+    /// @notice In practice used to collect airdrops or other rewards linked to the underlying vault.
     function recoverERC20(address token, uint256 amount) external override(IERC4626ImpactVault) onlyOwner {
         if(token==address(underlyingVault)){
             revert BadTokenWithdrawal();
