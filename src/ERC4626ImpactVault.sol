@@ -61,7 +61,7 @@ contract ERC4626ImpactVault is ERC4626, Ownable2Step, IERC4626ImpactVault {
     /* 
     struct TimelockedSurplus {
         uint128 surplus; // TimeLocked surplus - distributable at timelock expiry (3 day)
-        uint64 timestamp; // Ok until year 2554  - timestamp when surplus was timelocked
+        uint64 timestamp; // Timestamp when surplus was timelocked
         uint64 minimalCollectAmount; // Minimal Amount to auto-Collect at each deposit/ withdrawal - can be set by _owner. uint64 -> ~ 18 wad
     }
     */
