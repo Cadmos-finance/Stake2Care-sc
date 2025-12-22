@@ -56,7 +56,7 @@ contract ImpactVault is ERC4626, Ownable2Step, IImpactVault {
     /* 
     struct TimelockedSurplus {
         uint128 surplus; // TimeLocked surplus - distributable at timelock expiry (3 day)
-        uint64 timestamp; // Ok until year 2554  - timestamp when surplus was timelocked
+        uint64 timestamp; // Timestamp when surplus was timelocked
         uint64 minimalCollectAmount; // Minimal Amount to auto-Collect at each deposit/ withdrawal - can be set by _owner. uint64 -> ~ 18 wad
     }
     */
@@ -67,7 +67,7 @@ contract ImpactVault is ERC4626, Ownable2Step, IImpactVault {
     /**
      * @dev Assumptions: Asset is a positively increasing rebasing token (e.g: STETH), all gains are distributed to _owner.
      * In case of slashing, we wait for the asset to rebase > 1 before resuming distributions.
-     * To alleviate risk if Asset rebases Up then Down (e.g. StETH: 1 - > 1.30 -> 1.0) due for instance to an operational blunder of asset issuer, we have put in place a 24-hour timelock before surplus distribution takes place.
+     * To alleviate risk if Asset rebases Up then Down (e.g. StETH: 1 - > 1.30 -> 1.0) due for instance to an operational blunder of asset issuer, we have put in place a 3-daytimelock before surplus distribution takes place.
      * minDeposit param sets minimal deposit size in asset, for StEth which has a few wei imprecision in transfer, we use 1Gwei
      * @dev On deployment it is recommended to make a donation of MIN_DEPOSIT to the vault to prevent potential rounding issues in the future
      */
@@ -265,7 +265,7 @@ contract ImpactVault is ERC4626, Ownable2Step, IImpactVault {
     }
 
     /// @notice Collects Asset Surplus as a donation for Owner
-    /// @dev Does not collect if 24-hour timeLocked surplus is less than minimalTransfer
+    /// @dev Does not collect if 3-day timeLocked surplus is less than minimalTransfer
     /// @dev At most collects Once a day
     /// @dev caller indicates minimalTransferAmount for computation to take place - if 0 is indicated we revert to default minimum (as registered in storage)
     function collectDonations(
