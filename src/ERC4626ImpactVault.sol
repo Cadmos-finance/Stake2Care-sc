@@ -46,6 +46,9 @@ import "@openzeppelin/contracts/utils/math/Math.sol";
 /// @title ERC4626 Impact Vault Smart Contract
 /// @author N.B.
 /// @notice Used to donate gains stemming from an ERC4626 Vault
+/// @dev Assumes underlying Vault convertToAssets/convertToShares are monotonic OZ-style floors.
+/// Ceil is computed as floor or floor+1. Non-standard ERC4626 may break this invariant, which might result in over- or under-approximation of shares/assets in some edge cases.
+
 contract ERC4626ImpactVault is ERC4626, Ownable2Step, IERC4626ImpactVault {
     using SafeERC20 for IERC20;
     using Math for uint256;
@@ -68,8 +71,6 @@ contract ERC4626ImpactVault is ERC4626, Ownable2Step, IERC4626ImpactVault {
     TimelockedSurplus public timeLockedSurplus;
 
     struct VaultGlobals {
-        uint256 underlyingVaultTotalAssets;          // underlyingVault.totalAssets()
-        uint256 underlyingVaultTotalSupply;          // underlyingVault.totalSupply()
         uint256 ourTotalPosition;          // underlyingVault.balanceOf(address(this))
         uint256 ourTotalSupply;          //  totalSupply()
     }
@@ -225,8 +226,6 @@ contract ERC4626ImpactVault is ERC4626, Ownable2Step, IERC4626ImpactVault {
     /* ========== INTERNAL FUNCTIONS ========== */
 
     function _snapshotView() internal view returns (VaultGlobals memory g) {
-        g.underlyingVaultTotalAssets = underlyingVault.totalAssets();
-        g.underlyingVaultTotalSupply = underlyingVault.totalSupply();
         g.ourTotalPosition = underlyingVault.balanceOf(address(this));
         g.ourTotalSupply = totalSupply();
     }
@@ -234,32 +233,45 @@ contract ERC4626ImpactVault is ERC4626, Ownable2Step, IERC4626ImpactVault {
     function _snapshotAfterDonations() internal returns (VaultGlobals memory g) {
         // collectDonations returns updated wrapper ourTotalPosition / totalSupply
         (, g.ourTotalPosition, g.ourTotalSupply) = collectDonations(0);
-
-        // Now snapshot underlying state once
-        g.underlyingVaultTotalAssets = underlyingVault.totalAssets();
-        g.underlyingVaultTotalSupply = underlyingVault.totalSupply();
+        return g;
     }
+
+    function _uAssetsDown(uint256 uShares) internal view returns (uint256) {
+        return underlyingVault.convertToAssets(uShares); // floor
+    }
+
+    // ceil(convertToAssets)
+    function _uAssetsUp(uint256 uShares) internal view returns (uint256 a) {
+        a = underlyingVault.convertToAssets(uShares); // floor
+        if (underlyingVault.convertToShares(a) < uShares) a += 1;
+    }
+
+    function _uSharesDown(uint256 assets) internal view returns (uint256) {
+        return underlyingVault.convertToShares(assets); // floor
+    }
+
+    // ceil(convertToShares)
+    function _uSharesUp(uint256 assets) internal view returns (uint256 s) {
+        s = underlyingVault.convertToShares(assets); // floor
+        if (underlyingVault.convertToAssets(s) < assets) s += 1;
+    }
+
 
     function _previewDepositGivenGlobals(
         uint256 assets,
-        VaultGlobals memory g  
+        VaultGlobals memory g
     ) internal view returns (uint256) {
-        //We explicitly round up the Vault's Gross Assets
-        uint256 totalAssets_ = Math.mulDiv(
-            g.ourTotalPosition,
-            g.underlyingVaultTotalAssets,
-            g.underlyingVaultTotalSupply,
-            Math.Rounding.Up 
-        );
+        // Gross assets of our position (ceil) — conservative for depositors
+        uint256 totalAssets_ = _uAssetsUp(g.ourTotalPosition);
+
+        // underlying shares minted (includes underlying fee logic)
         uint256 createdShares = underlyingVault.previewDeposit(assets);
-        uint256 underlyingAssetsPostFee = Math.mulDiv(
-            createdShares,
-            g.underlyingVaultTotalAssets,
-            g.underlyingVaultTotalSupply,
-            Math.Rounding.Down 
-        );
+
+        // Assets value of those shares at current NAV, fee-less conversion (floor)
+        uint256 underlyingAssetsPostFee = _uAssetsDown(createdShares);
+
         return _convertToSharesCompute(
-            underlyingAssetsPostFee, 
+            underlyingAssetsPostFee,
             Math.Rounding.Down,
             totalAssets_,
             g.ourTotalSupply
@@ -268,15 +280,9 @@ contract ERC4626ImpactVault is ERC4626, Ownable2Step, IERC4626ImpactVault {
 
     function _previewMintGivenGlobals(
         uint256 shares,
-        VaultGlobals memory g  
+        VaultGlobals memory g
     ) internal view returns (uint256) {
-        //We explicitly round up the Vault's Gross Assets
-        uint256 totalAssets_ = Math.mulDiv(
-            g.ourTotalPosition,
-            g.underlyingVaultTotalAssets,
-            g.underlyingVaultTotalSupply,
-            Math.Rounding.Up 
-        );
+        uint256 totalAssets_ = _uAssetsUp(g.ourTotalPosition);
 
         uint256 netAssetsToAdd = _convertToAssetsCompute(
             shares,
@@ -284,81 +290,56 @@ contract ERC4626ImpactVault is ERC4626, Ownable2Step, IERC4626ImpactVault {
             totalAssets_,
             g.ourTotalSupply
         );
-        //Underlying shares corresponding to that many assets (pre-fee NAV)
-        uint256 uShares = Math.mulDiv(
-            netAssetsToAdd,
-            g.underlyingVaultTotalSupply,
-            g.underlyingVaultTotalAssets,
-            Math.Rounding.Up
-        );
 
-        //Assets user must send to mint those underlying shares (includes underlying fees)
+        // Underlying shares needed for netAssetsToAdd, rounded UP
+        uint256 uShares = _uSharesUp(netAssetsToAdd);
+
+        // Assets user must send incl underlying fees
         return underlyingVault.previewMint(uShares);
     }
 
+
     function _previewWithdrawGivenGlobals(
         uint256 assets,
-        VaultGlobals memory g  
+        VaultGlobals memory g
     ) internal view returns (uint256) {
-        uint256 totalAssets_ = Math.mulDiv(
-            g.ourTotalPosition,
-            g.underlyingVaultTotalAssets,
-            g.underlyingVaultTotalSupply,
-            Math.Rounding.Down 
-        );
+        // Gross assets of our position (floor) — conservative for withdrawers
+        uint256 totalAssets_ = _uAssetsDown(g.ourTotalPosition);
 
-        // Underlying shares burned for this specific withdraw (includes underlying withdraw fees)
         uint256 underlyingSharesToBurn = underlyingVault.previewWithdraw(assets);
 
-        // Gross underlying assets those burned shares represent at current NAV
-        uint256 grossAssetsToRemove = Math.mulDiv(
-            underlyingSharesToBurn,
-            g.underlyingVaultTotalAssets,
-            g.underlyingVaultTotalSupply,
-            Math.Rounding.Up
-        );
+        // Gross assets removed by burning those underlying shares (ceil)
+        uint256 grossAssetsToRemove = _uAssetsUp(underlyingSharesToBurn);
 
         return _convertToSharesCompute(
             grossAssetsToRemove,
             Math.Rounding.Up,
-            totalAssets_, //Rounds Down
+            totalAssets_,
             g.ourTotalSupply
         );
     }
 
+
     function _previewRedeemGivenGlobals(
         uint256 shares,
-        VaultGlobals memory g  
+        VaultGlobals memory g
     ) internal view returns (uint256) {
-        uint256 totalAssets_ = Math.mulDiv(
-            g.ourTotalPosition,
-            g.underlyingVaultTotalAssets,
-            g.underlyingVaultTotalSupply,
-            Math.Rounding.Down 
-        );
+        uint256 totalAssets_ = _uAssetsDown(g.ourTotalPosition);
 
-        // Gross underlying assets represented by these wrapper shares
         uint256 grossAssetsPortion = _convertToAssetsCompute(
             shares,
             Math.Rounding.Down,
             totalAssets_,
             g.ourTotalSupply
         );
-        // Underlying shares corresponding to that gross portion (pre-fee), using the
-        // underlying's own convertToShares (which rounds UP).
-        uint256 underlyingSharesToBurn = Math.mulDiv(
-                grossAssetsPortion,
-                g.underlyingVaultTotalSupply,
-                g.underlyingVaultTotalAssets,
-                Math.Rounding.Up
-            );
 
-        // Net assets actually returned by the underlying when those shares are redeemed,
-        // including any underlying redemption/withdrawal fees.
-        uint256 netAssetsToUser = underlyingVault.previewRedeem(underlyingSharesToBurn);
+        // Underlying shares corresponding to that gross portion, rounded UP
+        uint256 underlyingSharesToBurn = _uSharesUp(grossAssetsPortion);
 
-        return netAssetsToUser;
+        // Net assets returned by underlying incl fees
+        return underlyingVault.previewRedeem(underlyingSharesToBurn);
     }
+
 
 
     function _deposit(address caller, address receiver, uint256 assets, uint256 shares) internal virtual override(ERC4626) {
@@ -562,22 +543,35 @@ contract ERC4626ImpactVault is ERC4626, Ownable2Step, IERC4626ImpactVault {
                     ? timeLockedSurplus_.surplus
                     : newSurplus;
                 if (collectedAmount > minimalTransfer) {
-                    uint256 shareBurnt = underlyingVault.withdraw(
+                    //Best-effort withdraw: do not brick if liquidity/receiver/etc causes revert (e.g. owner blacklisted)
+                    try underlyingVault.withdraw(
                         collectedAmount,
-                        owner(),       // donate directly to owner
-                        address(this)  // burn this contract's shares
-                    );
-                    totalPosition -= shareBurnt;
+                        owner(),        // donate to owner
+                        address(this)   // burn our underlying shares
+                    ) returns (uint256 shareBurnt) {
+                        totalPosition -= shareBurnt;
+                        //Do not update timeLock if donation failed
+                        unchecked {
+                            timeLockedSurplus = TimelockedSurplus(
+                                newSurplus - collectedAmount,
+                                uint64(block.timestamp + 3 days),
+                                timeLockedSurplus_.minimalCollectAmount
+                            );
+                        }
+                    } catch {
+                        // Do nothing if withdraw fails
+                        collectedAmount = 0;
+                    }
                 } else {
                     collectedAmount = 0;
+                    unchecked{
+                        timeLockedSurplus = TimelockedSurplus(
+                            newSurplus - collectedAmount,
+                            uint64(block.timestamp + 3 days),
+                            timeLockedSurplus_.minimalCollectAmount
+                        );
+                    }
                 }
-                unchecked{
-                timeLockedSurplus = TimelockedSurplus(
-                    newSurplus - collectedAmount,
-                    uint64(block.timestamp + 3 days),
-                    timeLockedSurplus_.minimalCollectAmount
-                );
-            }
             } //Do nothing if timeLock not elapsed
         }
     }
