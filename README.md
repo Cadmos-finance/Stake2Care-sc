@@ -1,4 +1,4 @@
-# ImpactVault smart contract - [Arab Bank Switzerland](https://www.arabbank.ch/) Stake2Care Project
+# ImpactVault smart contract - Doctors Without Borders (MSF Switzerland) Stake2Care Project
 
 ## Intro
 
