@@ -46,9 +46,12 @@ import "@openzeppelin/contracts/utils/math/Math.sol";
 /// @title ERC4626 Impact Vault Smart Contract
 /// @author N.B.
 /// @notice Used to donate gains stemming from an ERC4626 Vault
-/// @dev Assumes underlying Vault convertToAssets/convertToShares are monotonic OZ-style floors.
-/// Ceil is computed as floor or floor+1. Non-standard ERC4626 may break this invariant, which might result in over- or under-approximation of shares/assets in some edge cases.
-
+/// @dev Rounding model:
+/// - This wrapper intentionally applies conservative rounding (at most +1 unit on some conversions)
+///   to favour the Vault when evaluating the value of its underlying position and handling deposits/ withdrawals.
+/// - /!\ Assumes the underlying vault's convertToAssets/convertToShares are standard, relying on a single mulDiv
+///   Non-standard ERC4626 implementations may not satisfy this invariant,
+///   which could lead to small over/under-approximations in preview functions.
 contract ERC4626ImpactVault is ERC4626, Ownable2Step, IERC4626ImpactVault {
     using SafeERC20 for IERC20;
     using Math for uint256;
@@ -236,39 +239,19 @@ contract ERC4626ImpactVault is ERC4626, Ownable2Step, IERC4626ImpactVault {
         return g;
     }
 
-    function _uAssetsDown(uint256 uShares) internal view returns (uint256) {
-        return underlyingVault.convertToAssets(uShares); // floor
-    }
-
-    // ceil(convertToAssets)
-    function _uAssetsUp(uint256 uShares) internal view returns (uint256 a) {
-        a = underlyingVault.convertToAssets(uShares); // floor
-        if (underlyingVault.convertToShares(a) < uShares) a += 1;
-    }
-
-    function _uSharesDown(uint256 assets) internal view returns (uint256) {
-        return underlyingVault.convertToShares(assets); // floor
-    }
-
-    // ceil(convertToShares)
-    function _uSharesUp(uint256 assets) internal view returns (uint256 s) {
-        s = underlyingVault.convertToShares(assets); // floor
-        if (underlyingVault.convertToAssets(s) < assets) s += 1;
-    }
-
 
     function _previewDepositGivenGlobals(
         uint256 assets,
         VaultGlobals memory g
     ) internal view returns (uint256) {
         // Gross assets of our position (ceil) — conservative for depositors
-        uint256 totalAssets_ = _uAssetsUp(g.ourTotalPosition);
+        uint256 totalAssets_ = underlyingVault.convertToAssets(g.ourTotalPosition) + 1; //ceil, up to one unit over-estimation in favour of contract
 
-        // underlying shares minted (includes underlying fee logic)
+        // underlying shares minted (net of possible fees)
         uint256 createdShares = underlyingVault.previewDeposit(assets);
 
-        // Assets value of those shares at current NAV, fee-less conversion (floor)
-        uint256 underlyingAssetsPostFee = _uAssetsDown(createdShares);
+        // Assets value of those shares at current NAV, fee-less conversion 
+        uint256 underlyingAssetsPostFee = underlyingVault.convertToAssets(createdShares); //floor 
 
         return _convertToSharesCompute(
             underlyingAssetsPostFee,
@@ -282,7 +265,7 @@ contract ERC4626ImpactVault is ERC4626, Ownable2Step, IERC4626ImpactVault {
         uint256 shares,
         VaultGlobals memory g
     ) internal view returns (uint256) {
-        uint256 totalAssets_ = _uAssetsUp(g.ourTotalPosition);
+        uint256 totalAssets_ = underlyingVault.convertToAssets(g.ourTotalPosition) + 1; //ceil, up to one unit over-estimation in favour of contract
 
         uint256 netAssetsToAdd = _convertToAssetsCompute(
             shares,
@@ -292,7 +275,7 @@ contract ERC4626ImpactVault is ERC4626, Ownable2Step, IERC4626ImpactVault {
         );
 
         // Underlying shares needed for netAssetsToAdd, rounded UP
-        uint256 uShares = _uSharesUp(netAssetsToAdd);
+        uint256 uShares = underlyingVault.convertToShares(netAssetsToAdd) + 1; //ceil
 
         // Assets user must send incl underlying fees
         return underlyingVault.previewMint(uShares);
@@ -304,12 +287,12 @@ contract ERC4626ImpactVault is ERC4626, Ownable2Step, IERC4626ImpactVault {
         VaultGlobals memory g
     ) internal view returns (uint256) {
         // Gross assets of our position (floor) — conservative for withdrawers
-        uint256 totalAssets_ = _uAssetsDown(g.ourTotalPosition);
+        uint256 totalAssets_ = underlyingVault.convertToAssets(g.ourTotalPosition);
 
         uint256 underlyingSharesToBurn = underlyingVault.previewWithdraw(assets);
 
         // Gross assets removed by burning those underlying shares (ceil)
-        uint256 grossAssetsToRemove = _uAssetsUp(underlyingSharesToBurn);
+        uint256 grossAssetsToRemove = underlyingVault.convertToAssets(underlyingSharesToBurn) + 1; //ceil, up to one unit over-estimation
 
         return _convertToSharesCompute(
             grossAssetsToRemove,
@@ -324,7 +307,7 @@ contract ERC4626ImpactVault is ERC4626, Ownable2Step, IERC4626ImpactVault {
         uint256 shares,
         VaultGlobals memory g
     ) internal view returns (uint256) {
-        uint256 totalAssets_ = _uAssetsDown(g.ourTotalPosition);
+        uint256 totalAssets_ = underlyingVault.convertToAssets(g.ourTotalPosition); //floor
 
         uint256 grossAssetsPortion = _convertToAssetsCompute(
             shares,
@@ -333,8 +316,8 @@ contract ERC4626ImpactVault is ERC4626, Ownable2Step, IERC4626ImpactVault {
             g.ourTotalSupply
         );
 
-        // Underlying shares corresponding to that gross portion, rounded UP
-        uint256 underlyingSharesToBurn = _uSharesUp(grossAssetsPortion);
+        // Underlying shares corresponding to that gross portion, rounded DOWN
+        uint256 underlyingSharesToBurn = underlyingVault.convertToShares(grossAssetsPortion);
 
         // Net assets returned by underlying incl fees
         return underlyingVault.previewRedeem(underlyingSharesToBurn);
@@ -354,7 +337,6 @@ contract ERC4626ImpactVault is ERC4626, Ownable2Step, IERC4626ImpactVault {
                 address(this)
             );
 
-        // Now run the normal ERC4626 burn + transfer
         super._withdraw(caller, receiver, owner, assets, shares);
     }
 
@@ -508,7 +490,7 @@ contract ERC4626ImpactVault is ERC4626, Ownable2Step, IERC4626ImpactVault {
 
     /// @notice Collects Asset Surplus as a donation for Owner
     /// @dev Does not collect if 3-day timeLocked surplus is less than minimalTransfer
-    /// @dev At most collects Once a day
+    /// @dev At most collects Once every 3 days (timelock)
     /// @dev caller indicates minimalTransferAmount for computation to take place - if 0 is indicated we revert to default minimum (as registered in storage)
     /// @dev can be reentered by underlyingvault; we assume underlying vault is trusted
     /// @param minimalTransfer Minimal Transfer Amount to trigger collection

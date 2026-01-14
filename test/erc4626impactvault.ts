@@ -146,9 +146,9 @@ describe("ERC4626ImpactVault", function () {
 
       await mockAsset.mint(depositorA.address, MIN_DEPOSIT);
       await mockAsset.connect(depositorA).approve(impactVaultAddress, MIN_DEPOSIT);
-
+      const subMinDeposit = MIN_DEPOSIT - 1n;  
       await expect(
-        impactVault.connect(depositorA).deposit(MIN_DEPOSIT, depositorA.address)
+        impactVault.connect(depositorA).deposit(subMinDeposit, depositorA.address)
       ).to.be.revertedWithCustomError(impactVault, "DepositTooLow");
     });
 
@@ -257,9 +257,9 @@ describe("ERC4626ImpactVault", function () {
 
       await mockAsset.mint(depositorA.address, parseUnits("100"));
       await mockAsset.connect(depositorA).approve(impactVaultAddress, parseUnits("100"));
-
+      const subMinDeposit = MIN_DEPOSIT - 1n;  
       await expect(
-        impactVault.connect(depositorA).mint(MIN_DEPOSIT, depositorA.address)
+        impactVault.connect(depositorA).mint(subMinDeposit, depositorA.address)
       ).to.be.revertedWithCustomError(impactVault, "DepositTooLow");
     });
 
@@ -276,7 +276,7 @@ describe("ERC4626ImpactVault", function () {
       expect(await impactVault.balanceOf(depositorA.address)).to.equal(sharesToMint);
     });
 
-    it("Should take exact assets for shares when NAV = 1", async function () {
+    it("Should take exact assets +1 for shares when NAV = 1", async function () {
       const { impactVault, mockAsset, depositorA } = await loadFixture(fullERC4626DeploymentFixture);
       const impactVaultAddress = await impactVault.getAddress();
       const sharesToMint = parseUnits("1000");
@@ -287,8 +287,8 @@ describe("ERC4626ImpactVault", function () {
       const balanceBefore = await mockAsset.balanceOf(depositorA.address);
       const assetsTaken = await impactVault.connect(depositorA).mint.staticCall(sharesToMint, depositorA.address);
 
-      // When NAV = 1, assets = shares
-      expect(assetsTaken).to.equal(sharesToMint);
+      // When NAV = 1, assets = shares +1
+      expect(assetsTaken).to.equal(sharesToMint+1n);
 
       await impactVault.connect(depositorA).mint(sharesToMint, depositorA.address);
       const balanceAfter = await mockAsset.balanceOf(depositorA.address);
@@ -338,7 +338,7 @@ describe("ERC4626ImpactVault", function () {
       expect(assetsAfter - assetsBefore).to.equal(withdrawAmount);
     });
 
-    it("Should burn exact shares when NAV = 1", async function () {
+    it("Should burn exact shares +1 when NAV = 1", async function () {
       const { impactVault, depositorA } = await loadFixture(deployedWithDepositsFixture);
       const withdrawAmount = parseUnits("1000");
 
@@ -353,19 +353,20 @@ describe("ERC4626ImpactVault", function () {
 
       const sharesAfter = await impactVault.balanceOf(depositorA.address);
       // When NAV = 1, shares burned = assets withdrawn
-      expect(sharesBefore - sharesAfter).to.equal(withdrawAmount);
+      expect(sharesBefore - sharesAfter).to.equal(withdrawAmount+1n);
     });
 
     it("Should emit Withdraw event with correct values", async function () {
       const { impactVault, depositorA } = await loadFixture(deployedWithDepositsFixture);
       const withdrawAmount = parseUnits("1000");
 
-      // When NAV = 1, shares = assets
+      // When NAV = 1, shares = assets + 1
+      const sharesToBurn = withdrawAmount + 1n;
       await expect(
         impactVault.connect(depositorA).withdraw(withdrawAmount, depositorA.address, depositorA.address)
       )
         .to.emit(impactVault, "Withdraw")
-        .withArgs(depositorA.address, depositorA.address, depositorA.address, withdrawAmount, withdrawAmount);
+        .withArgs(depositorA.address, depositorA.address, depositorA.address, withdrawAmount, sharesToBurn);
     });
 
     it("Should burn more shares after loss (NAV < 1)", async function () {
@@ -416,7 +417,7 @@ describe("ERC4626ImpactVault", function () {
       expect(sharesBefore - sharesAfter).to.equal(sharesToRedeem);
     });
 
-    it("Should give exact assets when NAV = 1", async function () {
+    it("Should give exact assets - 1 when NAV = 1", async function () {
       const { impactVault, mockAsset, depositorA } = await loadFixture(deployedWithDepositsFixture);
       const sharesToRedeem = parseUnits("1000");
 
@@ -447,7 +448,7 @@ describe("ERC4626ImpactVault", function () {
 
       const totalAssetsWithdraw = mulDiv(await underlyingVault.balanceOf(await impactVault.getAddress()), await underlyingVault.totalAssets(), await underlyingVault.totalSupply(), false);
       const grossAssetsPortion = mulDiv(sharesToRedeem, totalAssetsWithdraw+BigInt(1), totalSupply+BigInt(1), false);
-      const underlyingSharesToBurn = await underlyingVault.previewWithdraw(grossAssetsPortion);
+      const underlyingSharesToBurn = await underlyingVault.convertToShares(grossAssetsPortion);
       const expectedAssets = await underlyingVault.previewRedeem(underlyingSharesToBurn);
 
 
@@ -460,7 +461,7 @@ describe("ERC4626ImpactVault", function () {
       expect(assetsReceived).to.be.lt(sharesToRedeem); // Fewer assets than shares when NAV < 1
     });
 
-    it("Should give assets = shares after yield when NAV >= 1 (post donation collection)", async function () {
+    it("Should give assets = shares - 1 after yield when NAV >= 1 (post donation collection)", async function () {
       const { impactVault, underlyingVault, mockAsset, depositorA } = await loadFixture(deployedWithDepositsFixture);
 
       // totalAssets = totalSupply = 10100 initially
@@ -490,11 +491,11 @@ describe("ERC4626ImpactVault", function () {
       const assetsReceived = assetsAfter - assetsBefore;
 
       // Expected assets = shares * totalAssets / totalSupply
-      const expectedAssets = mulDiv(sharesToRedeem, totalAssets, totalSupply, false);
+      const expectedAssets = mulDiv(sharesToRedeem, totalAssets, totalSupply, false)-1n;
       expect(assetsReceived).to.equal(expectedAssets);
 
       // After donation collection, NAV should be  1, so assets = shares
-      expect(assetsReceived).to.equal(sharesToRedeem);
+      expect(assetsReceived).to.equal(sharesToRedeem-1n);
     });
   });
 
@@ -523,7 +524,7 @@ describe("ERC4626ImpactVault", function () {
       const preview = await impactVault.previewMint(sharesToMint);
 
       // Expected: shares * totalAssets / totalSupply (rounded up)
-      const expected = mulDiv(sharesToMint, totalAssets, totalSupply, true);
+      const expected = mulDiv(sharesToMint, totalAssets, totalSupply, false) + 1n;
       expect(preview).to.equal(expected);
     });
 
@@ -537,7 +538,7 @@ describe("ERC4626ImpactVault", function () {
       const preview = await impactVault.previewWithdraw(withdrawAmount);
 
       // Expected: assets * totalSupply / totalAssets (rounded up)
-      const expected = mulDiv(withdrawAmount, totalSupply, totalAssets, true);
+      const expected = mulDiv(withdrawAmount, totalSupply, totalAssets, false)+1n;
       expect(preview).to.equal(expected);
     });
 
@@ -641,7 +642,7 @@ describe("ERC4626ImpactVault", function () {
       const maxWithdraw = await impactVault.maxWithdraw(depositorA.address);
 
       // maxWithdraw = previewRedeem(ownerShares)
-      const expectedMaxWithdraw = await impactVault.previewRedeem(ownerShares);
+      const expectedMaxWithdraw = await impactVault.previewRedeem(ownerShares)-1n;//minus 1 for rounding
       expect(maxWithdraw).to.equal(expectedMaxWithdraw);
     });
 
@@ -1253,17 +1254,17 @@ describe("ERC4626ImpactVault", function () {
       expectedShares += parseUnits("2000");
       expect(await impactVault.balanceOf(depositorA.address)).to.equal(expectedShares);
 
-      // Partial withdrawals (NAV = 1, so shares = assets)
+      // Partial withdrawals (NAV = 1, so shares = assets + 1)
       await impactVault.connect(depositorA).withdraw(parseUnits("500"), depositorA.address, depositorA.address);
-      expectedShares -= parseUnits("500");
+      expectedShares -= parseUnits("500")+1n;
       expect(await impactVault.balanceOf(depositorA.address)).to.equal(expectedShares);
 
       await impactVault.connect(depositorA).withdraw(parseUnits("1000"), depositorA.address, depositorA.address);
-      expectedShares -= parseUnits("1000");
+      expectedShares -= parseUnits("1000")+1n;
       expect(await impactVault.balanceOf(depositorA.address)).to.equal(expectedShares);
 
-      // Final balance should be 3000 USDC (4500 - 1500)
-      expect(await impactVault.balanceOf(depositorA.address)).to.equal(parseUnits("3000"));
+      // Final balance should be 3000 USDC (4500 - 1500) - 2
+      expect(await impactVault.balanceOf(depositorA.address)).to.equal(parseUnits("3000")-2n);
     });
 
     it("Should handle very large deposits correctly", async function () {
@@ -1325,7 +1326,7 @@ describe("ERC4626ImpactVault", function () {
 
       const totalAssetsWithdraw = mulDiv(await underlyingVault.balanceOf(await impactVault.getAddress()), await underlyingVault.totalAssets(), await underlyingVault.totalSupply(), false);
       const grossAssetsPortion = mulDiv(shares, totalAssetsWithdraw+BigInt(1), totalSupply+BigInt(1), false);
-      const underlyingSharesToBurn = await underlyingVault.previewWithdraw(grossAssetsPortion);
+      const underlyingSharesToBurn = await underlyingVault.convertToShares(grossAssetsPortion);
       const expectedAssets = await underlyingVault.previewRedeem(underlyingSharesToBurn);
 
       await impactVault.connect(depositorA).redeem(shares, depositorA.address, depositorA.address);
@@ -1453,7 +1454,7 @@ describe("ERC4626ImpactVault with Underlying Vault Fees", function () {
         const assetsSpent = balanceBefore - balanceAfter;
         
         expect(assetsSpent).to.equal(assetsRequired);
-        expect(assetsSpent-sharesToMint).to.equal(assetsSpent*BigInt(5)/BigInt(1000)+BigInt(1)); // 0.5% fee
+        expect(assetsSpent-sharesToMint).to.equal(assetsSpent*BigInt(5)/BigInt(1000)+BigInt(1)+BigInt(1)); // 0.5% fee
         expect(await impactVault.balanceOf(depositorA.address)).to.equal(sharesToMint);
       }); 
       
@@ -1496,7 +1497,7 @@ describe("ERC4626ImpactVault with Underlying Vault Fees", function () {
         
         // Shares burned should be more than in no-fee scenario
         const sharesBurned = sharesBefore - sharesAfter;
-        expect(sharesBurned-withdrawAmount).to.equal(sharesBurned*BigInt(3)/BigInt(1000)+BigInt(1)); // 0.3% fee
+        expect(sharesBurned-withdrawAmount).to.equal(sharesBurned*BigInt(3)/BigInt(1000)+BigInt(1)+BigInt(1)); // 0.3% fee
       });
       
       it("previewWithdraw should match actual withdraw with fee", async function () {
@@ -1533,10 +1534,10 @@ describe("ERC4626ImpactVault with Underlying Vault Fees", function () {
         const underlyingSharesToBurn = await underlyingVault.previewWithdraw(withdrawAmount);
         
         // Gross assets being removed from position
-        const grossAssetsRemoved = mulDiv(underlyingSharesToBurn, underlyingTotalAssets, underlyingTotalSupply, true);
+        const grossAssetsRemoved = mulDiv(underlyingSharesToBurn, underlyingTotalAssets, underlyingTotalSupply, false)  +1n;
         
         // Impact vault shares to burn
-        const expectedSharesBurned = mulDiv(grossAssetsRemoved, totalSupply, totalAssets, true);
+        const expectedSharesBurned = mulDiv(grossAssetsRemoved, totalSupply +1n, totalAssets +1n, false);
         
         const sharesBefore = await impactVault.balanceOf(depositorA.address);
         await impactVault.connect(depositorA).withdraw(withdrawAmount, depositorA.address, depositorA.address);
