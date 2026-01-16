@@ -62,7 +62,7 @@ contract MetaMorphoImpactVault is ERC4626ImpactVault {
     ) ERC4626ImpactVault(underlyingVault_, name_, symbol_, minDeposit_) {
         if (address(merklDistributor_) == address(0)) revert ZeroMerklDistributor();
         MERKL_DISTRIBUTOR = merklDistributor_;
-        toggleMerklOperator(msg.sender); // Authorize deployer as Merkl operator by default
+        IMerklDistributor(merklDistributor_).toggleOperator(address(this), msg.sender);// Authorize deployer as Merkl operator by default
     }
 
     /// @notice Owner-gated helper to authorize (or deauthorize) an operator on Merkl for THIS vault.
