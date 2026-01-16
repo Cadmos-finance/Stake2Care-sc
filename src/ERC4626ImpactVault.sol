@@ -86,7 +86,7 @@ contract ERC4626ImpactVault is ERC4626, Ownable2Step, IERC4626ImpactVault {
      * Donation only possible when ERC4626ImpactVault has a surplus.
      * To alleviate risk if ERC4626ImpactVault NAV swings Up then Down (e.g. 1 - > 1.30 -> 1.0) due for instance to an operational blunder of asset issuer, we have put in place a 3 day timelock before surplus distribution takes place.
      * minDeposit param sets minimal deposit size in asset units to avoid rounding issues.
-     * @dev On deployment it is recommended to make a donation of MIN_DEPOSIT to the vault to prevent potential rounding issues in the future
+     * @dev On deployment it is recommended to make a donation of MIN_DEPOSIT to the vault (deposit and burn obtained tokens) to prevent potential rounding issues in the future
      */
     constructor(
         IERC4626 underlyingVault_,
@@ -218,10 +218,7 @@ contract ERC4626ImpactVault is ERC4626, Ownable2Step, IERC4626ImpactVault {
     }
 
     function maxRedeem(address owner) public view override(ERC4626) returns (uint256) {
-        uint256 maxAssets = maxWithdraw(owner);
-        uint256 neededShares = previewWithdraw(maxAssets);
-        uint256 ownerShares = balanceOf(owner);
-        return neededShares < ownerShares ? neededShares : ownerShares;
+        return previewWithdraw(maxWithdraw(owner));
     }
 
 
@@ -512,7 +509,9 @@ contract ERC4626ImpactVault is ERC4626, Ownable2Step, IERC4626ImpactVault {
         TimelockedSurplus memory timeLockedSurplus_ = timeLockedSurplus;
         minimalTransfer = minimalTransfer == 0
             ? timeLockedSurplus_.minimalCollectAmount
-            : minimalTransfer;
+            : minimalTransfer > timeLockedSurplus_.minimalCollectAmount
+                ? timeLockedSurplus_.minimalCollectAmount //upperly bound to stored minimalCollectAmount to prevent DOS
+                : minimalTransfer;
         if (redeemableAssets > totalSupply_ + minimalTransfer) {
             //Check if current surplus is high enough
             bool sufficientTransfer;
