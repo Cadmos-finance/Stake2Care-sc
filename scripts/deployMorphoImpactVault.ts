@@ -52,6 +52,29 @@ async function main() {
   for (const c of configs) {
     console.log(`\n=== Deploying ${c.label} MetaMorphoImpactVault ===`);
 
+      const deployTxReq = await Factory.getDeployTransaction(
+    c.underlying,
+    c.name,
+    c.symbol,
+    MIN_DEPOSIT,
+    MERKL
+  );
+
+  try {
+    // This simulates the deployment and returns revert data if it fails
+     await ethers.provider.call({
+  ...deployTxReq,
+  from: deployerAddr,
+  gasLimit: 20_000_000n,
+});
+  } catch (e: any) {
+    console.error(`Constructor simulation failed for ${c.label}:`);
+    console.error(e);
+    // Often providers include `e.data` (revert data). If present:
+    if (e?.data) console.error("revert data:", e.data);
+    throw e;
+  }
+
     const vault = await Factory.deploy(
       c.underlying,
       c.name,

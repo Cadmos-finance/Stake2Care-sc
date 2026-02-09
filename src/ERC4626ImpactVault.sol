@@ -84,7 +84,7 @@ contract ERC4626ImpactVault is ERC4626, Ownable2Step, IERC4626ImpactVault {
     ) ERC20(name, symbol) ERC4626(IERC20(underlyingVault_.asset())) {
         underlyingVault = underlyingVault_;
         MIN_DEPOSIT = minDeposit;
-        IERC20(asset()).approve(address(underlyingVault), type(uint256).max);
+        IERC20(asset()).forceApprove(address(underlyingVault), type(uint256).max);
     }
 
     /* ========== VIEW FUNCTIONS ========== */
