@@ -18,7 +18,7 @@ async function main() {
   );
 
 
-
+  /*
   const testStEThFactory = await ethers.getContractFactory("TestStETH");
   const testStETH  = await testStEThFactory.deploy();
 
@@ -47,8 +47,12 @@ async function main() {
   const LidoImpactVaultDepositorFactory = await ethers.getContractFactory(
     "LidoImpactVaultDepositor",
   );
+  const lidoAddress = network.name === "sepolia" || network.name === "localhost" 
+    ? await testStETH.getAddress()  // Use your test token
+    : "0x3e3FE7dBc6B4C189E7128855dD526361c49b40Af"; // Real Lido on Sepolia (if needed)
+
   const lidoImpactVaultDepositor = await LidoImpactVaultDepositorFactory.deploy(
-    "0x462F351EE8b10Cc21B161ad698eF3CEba957FE65",
+    lidoAddress,
     await impactVault.getAddress(),
   );
   // await lidoImpactVaultDepositor.deployed();
@@ -84,6 +88,64 @@ async function main() {
   await MSFPoint.waitForDeployment()
 
   await MSFPoint.grantRole(await MSFPoint.MINTER_ROLE(), await CharityEscrow.getAddress());
+
+  */
+  const MockERC20Factory = await ethers.getContractFactory("MockERC20");
+  const testUSDT  = await MockERC20Factory.deploy("Test USDT","tUSDT",6);
+  await testUSDT.waitForDeployment();
+
+  console.log(
+    "testUSDT deployed to:",
+    await testUSDT.getAddress(),
+  );
+    await testUSDT
+  .connect(deployer)
+  .mint(deployerAddress, ethers.parseEther("10000"));
+  console.log("Minted 10000e6 test USDT to :", deployerAddress);
+
+
+
+  const testUSDC  = await MockERC20Factory.deploy("Test USDC","tUSDC",6);
+
+  console.log(
+    "testUSDC deployed to:",
+    await testUSDC.getAddress(),
+  );
+  await testUSDC
+  .connect(deployer)
+  .mint(deployerAddress, ethers.parseEther("10000"));
+  console.log("Minted 10000e6 test USDC to :", deployerAddress);
+
+  const MockVaultFactory = await ethers.getContractFactory("UnderlyingVaultMock");
+
+  const USDTVault = await MockVaultFactory.deploy(await testUSDT.getAddress());
+  await USDTVault.waitForDeployment();
+    console.log(
+    "USDTVault deployed to:",
+    await USDTVault.getAddress(),
+  );
+  
+  const USDCVault = await MockVaultFactory.deploy(await testUSDC.getAddress());
+  await USDCVault.waitForDeployment();
+  console.log(
+    "USDCVault deployed to:",
+    await USDCVault.getAddress(),
+  );
+
+  
+  const ERC4626ImpactVault = await ethers.getContractFactory("ERC4626ImpactVault");
+  const USDTImpactVault = await ERC4626ImpactVault.deploy(await USDTVault.getAddress(),"USDT Impact Vault","ivUSDT",1000000);
+  console.log(
+    "USDTImpactVault deployed to:",
+    await USDTImpactVault.getAddress(),
+  );
+  const USDCImpactVault = await ERC4626ImpactVault.deploy(await USDCVault.getAddress(),"USDC Impact Vault","ivUSDC",1000000);
+    console.log(
+    "USDCImpactVault deployed to:",
+    await USDCImpactVault.getAddress(),
+  );
+
+
 
 
 
