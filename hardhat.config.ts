@@ -5,8 +5,8 @@ import "dotenv/config";
 const RPC_URL = process.env.ETH_URL || "rpc";
 const SEPOLIA_URL = process.env.SEPOLIA_URL || "rpc";
 
-const PRIVATE_KEY = process.env.PRIVATE_KEY || "privatKey";
-const PRIVATE_KEY_TESTNET = process.env.PRIVATE_KEY_TESTNET || "privatKey";
+const PRIVATE_KEY = process.env.PRIVATE_KEY;
+const PRIVATE_KEY_TESTNET = process.env.PRIVATE_KEY_TESTNET;
 const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY || "etherscanAPIKey";
 
 const config: HardhatUserConfig = {
@@ -29,11 +29,11 @@ const config: HardhatUserConfig = {
     networks: {
     sepolia: {
       url: SEPOLIA_URL,
-      accounts: [PRIVATE_KEY_TESTNET],
+      accounts: PRIVATE_KEY_TESTNET ? [PRIVATE_KEY_TESTNET] : [],
     },
     mainnet: {
       url: RPC_URL,
-      accounts: [PRIVATE_KEY],
+      accounts: PRIVATE_KEY ? [PRIVATE_KEY] : [],
     },
   },
   etherscan: {
