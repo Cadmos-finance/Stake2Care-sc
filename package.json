@@ -1,9 +1,17 @@
 {
   "name": "hardhat-project",
   "devDependencies": {
-    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "@nomicfoundation/hardhat-toolbox": "^6.1.2",
     "@openzeppelin/contracts": "^4.9.6",
     "dotenv": "^16.4.7",
-    "hardhat": "^2.22.16"
+    "hardhat": "^2.29.2",
+    "typescript": "^5.9.3"
+  },
+  "scripts": {
+    "build": "hardhat compile",
+    "test": "hardhat test --network hardhat"
+  },
+  "engines": {
+    "node": "^22.0.0 || ^24.0.0"
   }
 }
