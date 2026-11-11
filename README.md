@@ -27,10 +27,14 @@ The system has been generalised to donate the revenues of any value-accruing ERC
 
 ## Getting started
 
-- install `npm i`
-- build contract using solidity : `npx hardhat compile`
-- run tests `npx hardhat test`
+- use Node.js 24
+- install `npm ci`
+- build contracts: `npm run build`
+- run tests: `npm test`
 - deploy `npx hardhat run scripts/deploy.ts --network mainnet`
+
+Local builds and tests do not require deployment credentials. Set the RPC URL and
+private key environment variables before deploying to a public network.
 
 ## Audits
 You can find all audit reports under the audits folder:
